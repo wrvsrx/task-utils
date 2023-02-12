@@ -6,22 +6,22 @@ module Task (
   taskJsonToDotImpure,
 ) where
 
-import Control.Exception (assert)
+import Control.Arrow ((>>>))
 import Data.Aeson qualified as A
 import Data.Bifunctor (first)
 import Data.ByteString.Lazy qualified as BL
 import Data.Function ((&))
-import Data.Functor ((<&>))
 import Data.Graph.Inductive (Gr, Node, mkGraph)
 import Data.GraphViz qualified as GV
 import Data.List (intersect)
 import Data.Map qualified as M
-import Data.Maybe
+import Data.Maybe (fromJust)
 import Data.Set ((\\))
 import Data.Set qualified as S
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Time qualified as Time
+import Data.Tuple (swap)
 import Data.UUID (UUID)
 import Data.UUID qualified as UU
 import Taskwarrior.IO qualified as Ta
@@ -30,26 +30,13 @@ import Taskwarrior.Task (Task)
 import Taskwarrior.Task qualified as Ta
 
 taskDeserialize :: BL.ByteString -> [Task]
-taskDeserialize = fromMaybe (error "fail to parse json") . (A.decode :: BL.ByteString -> Maybe [Task])
+taskDeserialize = fromJust . (A.decode :: BL.ByteString -> Maybe [Task])
 
--- getEdgesOfTask :: M.Map Text Int -> Node -> (Task, Node) -> [(Node, Node)]
--- getEdgesOfTask m failNode (Task _ _ deps _ _ _, n) = map ((n,) . fromMaybe failNode . (`M.lookup` m)) deps
-
-getDepsNodeOfATask :: M.Map UUID Node -> Task -> ([Node], [UUID])
-getDepsNodeOfATask m t =
-  let
-    depsUUID = Ta.depends t & S.toList
-    depsNode = mapMaybe (`M.lookup` m) depsUUID
-    nonExistUUID = filter (\x -> case x `M.lookup` m of Just _ -> False; Nothing -> True) depsUUID
-   in
-    (depsNode, nonExistUUID)
+getDepsNodeOfATask :: M.Map UUID Node -> Task -> [Node]
+getDepsNodeOfATask m = Ta.depends >>> S.toList >>> map (fromJust . (`M.lookup` m))
 
 getEdgesOfTaskInClosure :: M.Map UUID Int -> (Task, Node) -> [(Node, Node)]
-getEdgesOfTaskInClosure m (t, n) =
-  let
-    res = getDepsNodeOfATask m t
-   in
-    assert (null (snd res)) res & fst & map (n,)
+getEdgesOfTaskInClosure m (t, n) = getDepsNodeOfATask m t & map (n,)
 
 getClosurePure :: [Task] -> [Task]
 getClosurePure ts =
@@ -81,14 +68,13 @@ tasksClosureToGraph ts =
   let
     tasksWithNode = ts `zip` [(1 :: Node) ..]
     mapFromUUIDToNode = tasksWithNode & map (first Ta.uuid) & M.fromList
-    nodes = tasksWithNode & map (\(x, y) -> (y, x))
+    nodes = tasksWithNode & map swap
     edges =
       tasksWithNode
         & concatMap (getEdgesOfTaskInClosure mapFromUUIDToNode)
         & map (\(x, y) -> (x, y, ()))
-    graph = mkGraph nodes edges :: Gr Task ()
    in
-    graph
+    mkGraph nodes edges
 
 taskGraphVis :: [Ta.Tag] -> Gr Task () -> GV.DotGraph Node
 taskGraphVis hls =
@@ -114,21 +100,21 @@ taskGraphVis hls =
     )
 
 taskJsonToDotPure :: [Ta.Tag] -> BL.ByteString -> T.Text
-taskJsonToDotPure tags bs =
-  bs
-    & taskDeserialize
-    & getClosurePure
-    & tasksClosureToGraph
-    & taskGraphVis tags
-    & GV.printDotGraph
-    & TL.toStrict
+taskJsonToDotPure tags =
+  taskDeserialize
+    >>> getClosurePure
+    >>> tasksClosureToGraph
+    >>> taskGraphVis tags
+    >>> GV.printDotGraph
+    >>> TL.toStrict
 
 taskJsonToDotImpure :: [Ta.Tag] -> BL.ByteString -> IO T.Text
-taskJsonToDotImpure tags bs =
-  bs
-    & taskDeserialize
-    & getClosureImpure
-    <&> tasksClosureToGraph
-    <&> taskGraphVis tags
-    <&> GV.printDotGraph
-    <&> TL.toStrict
+taskJsonToDotImpure tags =
+  taskDeserialize
+    >>> getClosureImpure
+    >>> fmap
+      ( tasksClosureToGraph
+          >>> taskGraphVis tags
+          >>> GV.printDotGraph
+          >>> TL.toStrict
+      )
