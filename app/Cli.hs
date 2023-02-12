@@ -31,6 +31,7 @@ optParser =
       )
     <*> flag False True (long "outside" <> short 'o')
 
+visOptionInfo :: ParserInfo VisOption
 visOptionInfo =
   info
     (optParser <**> helper)

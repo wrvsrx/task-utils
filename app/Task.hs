@@ -12,19 +12,13 @@ import Data.Aeson qualified as A
 import Data.Bifunctor (first)
 import Data.ByteString.Lazy qualified as BL
 import Data.Function ((&))
-import Data.Functor ((<&>))
 import Data.Graph.Inductive (Gr, Node, mkGraph)
-import Data.Graph.Inductive qualified as G
 import Data.GraphViz qualified as GV
-import Data.GraphViz.Attributes qualified as GV
-import Data.GraphViz.Attributes.Complete qualified as GV
 import Data.List (intersect)
 import Data.Map qualified as M
 import Data.Maybe
 import Data.Set qualified as S
-import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.IO qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.UUID (UUID)
 import Data.UUID qualified as UU
@@ -66,7 +60,7 @@ taskJsonToDot vs bs =
    in (TL.toStrict . GV.printDotGraph) $ taskGraphVis (highlights vs) graph
 
 taskGraphVis :: [T.Text] -> Gr Task () -> GV.DotGraph Node
-taskGraphVis highlights =
+taskGraphVis hls =
   GV.graphToDot
     ( GV.nonClusteredParams
         { GV.fmtNode = \(_, t) ->
@@ -81,7 +75,7 @@ taskGraphVis highlights =
                 Ta.Pending -> []
                 Ta.Deleted _ -> []
                 Ta.Recurring _ _ -> []
-              <> case highlights `intersect` S.toList (Ta.tags t) of
+              <> case hls `intersect` S.toList (Ta.tags t) of
                 [] -> []
                 _ -> [GV.color GV.Red]
         , GV.globalAttributes = [GV.GraphAttrs []]
