@@ -1,12 +1,14 @@
 module Main where
 
-import Cli
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.Text.IO as T
-import Task
+import Cli qualified
+import Data.ByteString.Lazy qualified as BL
+import Data.Text.IO qualified as T
+import Task (taskJsonToDotImpure, taskJsonToDotPure)
 
 main :: IO ()
 main = do
-  opt <- parseVisOpt
+  opt <- Cli.parseVisOpt
   cnt <- BL.getContents
-  T.putStrLn $ taskJsonToDot opt cnt
+  if Cli.impure opt
+    then taskJsonToDotImpure (Cli.highlights opt) cnt >>= T.putStrLn
+    else T.putStrLn $ taskJsonToDotPure (Cli.highlights opt) cnt

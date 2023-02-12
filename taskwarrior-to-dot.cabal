@@ -87,6 +87,7 @@ executable taskwarrior-to-dot
     , taskwarrior
     , text
     , uuid
+    , time
 
   -- Directories containing source files.
   hs-source-dirs:     app

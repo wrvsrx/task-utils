@@ -5,7 +5,7 @@ module Cli (
   parseVisOptPure,
   VisOption (
     highlights,
-    showOutside
+    impure
   ),
 ) where
 
@@ -14,7 +14,7 @@ import Options.Applicative
 
 data VisOption = VisOption
   { highlights :: [T.Text]
-  , showOutside :: Bool
+  , impure :: Bool
   }
 
 parseHighlights :: String -> Either String [T.Text]
@@ -29,7 +29,7 @@ optParser =
           <> short 'h'
           <> value []
       )
-    <*> flag False True (long "outside" <> short 'o')
+    <*> flag False True (long "impure" <> short 'i')
 
 visOptionInfo :: ParserInfo VisOption
 visOptionInfo =
