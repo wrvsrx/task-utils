@@ -11,7 +11,7 @@
       let pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
       in rec {
         packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
-        devShells.default = pkgs.mkShell { inputsFrom = [ packages.default ]; };
+        devShells.default = pkgs.mkShell { inputsFrom = [ packages.default.env ]; };
         formatters.default = pkgs.nixpkgs-fmt;
       }
     );

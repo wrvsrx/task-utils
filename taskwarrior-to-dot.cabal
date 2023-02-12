@@ -70,13 +70,21 @@ executable taskwarrior-to-dot
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
+    default-extensions:
+      ImportQualifiedPost
+
     -- Other library packages from which modules are imported.
     build-depends:
       base,
       graphviz,
       aeson,
       optparse-applicative,
-      taskwarrior
+      taskwarrior,
+      text,
+      uuid,
+      containers,
+      fgl,
+      bytestring
 
     -- Directories containing source files.
     hs-source-dirs:   app
