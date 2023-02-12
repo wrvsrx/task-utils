@@ -1,20 +1,16 @@
-{ stdenv, haskellPackages, makeWrapper, lib }:
-stdenv.mkDerivation rec {
-  name = "taskwarrior-to-dot";
-  buildInputs = [
-    (haskellPackages.ghcWithPackages (ps: with ps; [
-      graphviz
-      aeson
-      optparse-applicative
-      taskwarrior
-    ]))
-  ];
+{ mkDerivation, aeson, base, graphviz, lib, optparse-applicative
+, taskwarrior
+}:
+mkDerivation {
+  pname = "taskwarrior-to-dot";
+  version = "0.1.0.0";
   src = ./.;
-  buildPhase = ''
-    ghc Main
-  '';
-  installPhase = ''
-    mkdir -p $out/bin
-    cp Main $out/bin/${name}
-  '';
+  isLibrary = false;
+  isExecutable = true;
+  executableHaskellDepends = [
+    aeson base graphviz optparse-applicative taskwarrior
+  ];
+  homepage = "https://github.com/wrvsrx/taskwarrior-to-dot";
+  license = lib.licenses.mit;
+  mainProgram = "taskwarrior-to-dot";
 }
