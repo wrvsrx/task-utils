@@ -88,13 +88,13 @@ taskGraphVis hls =
                   <> T.take 8 (UU.toText (Ta.uuid t))
             ]
               <> case Ta.status t of
-                Ta.Completed _ -> [GV.fontColor GV.Gray]
+                Ta.Completed _ -> [GV.fontColor GV.Gray, GV.color GV.Gray]
                 Ta.Pending -> []
-                Ta.Deleted _ -> []
+                Ta.Deleted _ -> [GV.fontColor GV.Gray, GV.color GV.Gray]
                 Ta.Recurring _ _ -> []
               <> case hls `intersect` S.toList (Ta.tags t) of
                 [] -> []
-                _ -> [GV.color GV.Red]
+                _ -> [GV.fontColor GV.Red, GV.color GV.Red]
         , GV.globalAttributes = [GV.GraphAttrs []]
         }
     )
