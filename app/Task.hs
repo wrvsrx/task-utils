@@ -13,6 +13,7 @@ import Data.ByteString.Lazy qualified as BL
 import Data.Function ((&))
 import Data.Graph.Inductive (Gr, Node, mkGraph)
 import Data.GraphViz qualified as GV
+import Data.GraphViz.Attributes.HTML as GH
 import Data.List (intersect)
 import Data.Map qualified as M
 import Data.Maybe (fromJust)
@@ -82,10 +83,17 @@ taskGraphVis hls =
     ( GV.nonClusteredParams
         { GV.fmtNode = \(_, t) ->
             [ GV.toLabel $
-                Ta.description t
-                  <> "\n"
-                  <> maybe "" ((<> ",") . T.pack . show) (Ta.id t)
-                  <> T.take 8 (UU.toText (Ta.uuid t))
+                let
+                  des = TL.fromStrict $ Ta.description t
+                  uuid = TL.fromStrict $ maybe "" ((<> ",") . T.pack . show) (Ta.id t) <> T.take 8 (UU.toText (Ta.uuid t))
+                  toUnderline x = GH.Format GH.Underline [GH.Str x]
+                  textToTextItem = case Ta.status t of Ta.Deleted _ -> toUnderline; _ -> GH.Str
+                 in
+                  GH.Text
+                    [ textToTextItem des
+                    , GH.Newline []
+                    , textToTextItem uuid
+                    ]
             ]
               <> case Ta.status t of
                 Ta.Completed _ -> [GV.fontColor GV.Gray, GV.color GV.Gray]
