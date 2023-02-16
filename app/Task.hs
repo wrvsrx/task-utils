@@ -112,7 +112,12 @@ taskGraphVis hls =
                   des = TL.fromStrict $ Ta.description t
                   uuid = TL.fromStrict $ maybe "" ((<> ",") . T.pack . show) (Ta.id t) <> T.take 8 (UU.toText (Ta.uuid t))
                   toUnderline x = GH.Format GH.Underline [GH.Str x]
-                  textToTextItem = case Ta.status t of Ta.Deleted _ -> toUnderline; _ -> GH.Str
+                  textToTextItem =
+                    let
+                      st = case Ta.status t of Ta.Deleted _ -> True; _ -> False
+                      tag = "giveup" `S.member` Ta.tags t
+                     in
+                      if st || tag then toUnderline else GH.Str
                  in
                   GH.Text
                     [ textToTextItem des
