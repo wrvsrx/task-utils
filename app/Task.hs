@@ -4,6 +4,7 @@
 module Task (
   taskJsonToDotPure,
   taskJsonToDotImpure,
+  RenderOption (RenderOption, showDeleted, showOutside, highlights),
 ) where
 
 import Control.Arrow ((>>>))
@@ -50,6 +51,29 @@ getClosurePure ts =
    in
     ts <> outsideTasks
 
+-- closed input -> closed output
+-- open input -> ? output
+purgeDeleted :: [Task] -> [Task]
+purgeDeleted ts =
+  let
+    deletedUUIDSet =
+      ts
+        & filter (\t -> case Ta.status t of Ta.Deleted _ -> True; _ -> False)
+        & map Ta.uuid
+        & S.fromList
+   in
+    ts
+      & filter (\t -> case Ta.status t of Ta.Deleted _ -> False; _ -> True)
+      & map (\t -> t{Ta.depends = Ta.depends t \\ deletedUUIDSet})
+
+getClosureWithoutOutside :: [Task] -> [Task]
+getClosureWithoutOutside ts =
+  let
+    uuidSet = S.fromList (map Ta.uuid ts)
+    purgeOutsideDep t = t{Ta.depends = Ta.depends t `S.intersection` uuidSet}
+   in
+    map purgeOutsideDep ts
+
 getClosureImpure :: [Task] -> IO [Task]
 getClosureImpure ts =
   let
@@ -64,6 +88,7 @@ getClosureImpure ts =
         outsideTasks <- Ta.getTasks (map UU.toText (S.toList outsideDepsUUIDSet))
         getClosureImpure (ts <> outsideTasks)
 
+-- Must input a closure
 tasksClosureToGraph :: [Task] -> Gr Task ()
 tasksClosureToGraph ts =
   let
@@ -107,22 +132,30 @@ taskGraphVis hls =
         }
     )
 
-taskJsonToDotPure :: [Ta.Tag] -> BL.ByteString -> T.Text
-taskJsonToDotPure tags =
+data RenderOption = RenderOption
+  { showDeleted :: Bool
+  , showOutside :: Bool
+  , highlights :: [Ta.Tag]
+  }
+
+taskJsonToDotPure :: RenderOption -> BL.ByteString -> T.Text
+taskJsonToDotPure os =
   taskDeserialize
-    >>> getClosurePure
+    >>> (if showOutside os then getClosurePure else getClosureWithoutOutside)
+    >>> (if showDeleted os then id else purgeDeleted)
     >>> tasksClosureToGraph
-    >>> taskGraphVis tags
+    >>> taskGraphVis (highlights os)
     >>> GV.printDotGraph
     >>> TL.toStrict
 
-taskJsonToDotImpure :: [Ta.Tag] -> BL.ByteString -> IO T.Text
-taskJsonToDotImpure tags =
+taskJsonToDotImpure :: RenderOption -> BL.ByteString -> IO T.Text
+taskJsonToDotImpure os =
   taskDeserialize
     >>> getClosureImpure
     >>> fmap
-      ( tasksClosureToGraph
-          >>> taskGraphVis tags
+      ( (if showDeleted os then id else purgeDeleted)
+          >>> tasksClosureToGraph
+          >>> taskGraphVis (highlights os)
           >>> GV.printDotGraph
           >>> TL.toStrict
       )
