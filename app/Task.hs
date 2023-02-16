@@ -47,7 +47,7 @@ getClosurePure ts =
     depsUUIDSet = mconcat (map Ta.depends ts)
     outsideDepsUUIDSet = depsUUIDSet \\ tasksUUIDSet
     zeroUTC = Time.UTCTime (Time.ModifiedJulianDay 0) (Time.secondsToDiffTime 0)
-    outsideTasks = map (\x -> Ta.makeTask x zeroUTC "outside") (S.toList outsideDepsUUIDSet)
+    outsideTasks = map (\x -> (Ta.makeTask x zeroUTC "outside"){Ta.status = Ta.Completed zeroUTC}) (S.toList outsideDepsUUIDSet)
    in
     ts <> outsideTasks
 
