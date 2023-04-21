@@ -2,17 +2,19 @@
   description = "flake template";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    nur-wrvsrx.url = "github:wrvsrx/nur-packages";
+    nixpkgs.follows = "nur-wrvsrx/nixpkgs";
+    flake-parts.follows = "nur-wrvsrx/flake-parts";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
-      in rec {
-        packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
-        devShells.default = pkgs.mkShell { inputsFrom = [ packages.default.env ]; };
-        formatters.default = pkgs.nixpkgs-fmt;
-      }
-    );
+  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } ({ withSystem, ... }: {
+    systems = [ "x86_64-linux" ];
+    perSystem = { pkgs, ... }: rec {
+      packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
+      devShells.default = pkgs.mkShell { inputsFrom = [ packages.default.env ]; };
+    };
+    flake = withSystem "x86_64-linux" ({ pkgs, ... }: {
+      formatters.default = pkgs.nixpkgs-fmt;
+    });
+  });
 }
