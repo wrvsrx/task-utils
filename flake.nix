@@ -11,7 +11,13 @@
     systems = [ "x86_64-linux" ];
     perSystem = { pkgs, ... }: rec {
       packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
-      devShells.default = pkgs.mkShell { inputsFrom = [ packages.default.env ]; };
+      devShells.default = pkgs.mkShell {
+        inputsFrom = [ packages.default.env ];
+        nativeBuildInputs = with pkgs; [
+          haskellPackages.cabal-fmt
+          cabal2nix
+        ];
+      };
       formatter = pkgs.nixpkgs-fmt;
     };
   });
