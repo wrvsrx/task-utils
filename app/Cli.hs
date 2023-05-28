@@ -37,7 +37,7 @@ visOptionInfo =
   info
     (optParser <**> helper)
     ( fullDesc
-        <> progDesc "taskwarrior_to_dot: convert taskwarrior json to dot"
+        <> progDesc "taskwarrior-to-dot: convert taskwarrior json to dot"
     )
 
 parseVisOptPure :: [String] -> ParserResult VisOption
