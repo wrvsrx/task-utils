@@ -3,22 +3,17 @@
 module Cli (
   parseVisOpt,
   parseVisOptPure,
-  VisOption (
-    highlights,
-    impure,
-    deleted,
-    outside
-  ),
+  VisOption (..),
 ) where
 
 import Data.Text qualified as T
 import Options.Applicative
 
 data VisOption = VisOption
-  { highlights :: [T.Text]
-  , impure :: Bool
-  , outside :: Bool
-  , deleted :: Bool
+  { optHighlights :: [T.Text]
+  , optImpure :: Bool
+  , optOutside :: Bool
+  , optDeleted :: Bool
   }
 
 parseHighlights :: String -> Either String [T.Text]

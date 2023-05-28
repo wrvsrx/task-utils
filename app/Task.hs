@@ -4,7 +4,7 @@
 module Task (
   taskJsonToDotPure,
   taskJsonToDotImpure,
-  RenderOption (RenderOption, showDeleted, showOutside, highlights),
+  RenderOption (..),
 ) where
 
 import Control.Arrow ((>>>))
