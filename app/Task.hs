@@ -5,6 +5,7 @@ module Task (
   taskJsonToDotPure,
   taskJsonToDotImpure,
   RenderOption (..),
+  taskToClosure,
 ) where
 
 import Control.Arrow ((>>>))
@@ -164,3 +165,8 @@ taskJsonToDotImpure os =
           >>> GV.printDotGraph
           >>> TL.toStrict
       )
+
+taskToClosure :: BL.ByteString -> IO T.Text
+taskToClosure tJSON = do
+  ts <- taskDeserialize tJSON & getClosureImpure
+  return $ map (UU.toText . Ta.uuid) ts & T.unlines
