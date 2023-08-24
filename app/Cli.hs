@@ -37,7 +37,7 @@ visParser =
               <> help "Tags to be highlighted."
           )
         <*> flag False True (long "impure" <> short 'i' <> help "Enable impure mode. In impure mode, dependency closure will be visualized.")
-        <*> flag False True (long "outside" <> short 'o' <> help "Show tasks not appearing in input json.")
+        <*> flag False True (long "outside" <> short 'o' <> help "Show tasks not appearing in input json as `outside`.")
         <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
    in
     Right <$> vis
