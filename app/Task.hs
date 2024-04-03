@@ -24,6 +24,7 @@ import Data.Set qualified as S
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Time qualified as Time
+import Data.Time.LocalTime (TimeZone, localDay, utcToLocalTime)
 import Data.Tuple (swap)
 import Data.UUID (UUID)
 import Data.UUID qualified as UU
@@ -103,14 +104,20 @@ tasksClosureToGraph ts =
    in
     mkGraph nodes edges
 
-taskGraphVis :: [Ta.Tag] -> Gr Task () -> GV.DotGraph Node
-taskGraphVis hls =
+taskGraphVis :: TimeZone -> [Ta.Tag] -> Gr Task () -> GV.DotGraph Node
+taskGraphVis tz hls =
   GV.graphToDot
     ( GV.nonClusteredParams
         { GV.fmtNode = \(_, t) ->
             [ GV.toLabel $
                 let
                   des = TL.fromStrict $ Ta.description t
+                  startTime = case Ta.wait t of
+                    Just w -> w
+                    Nothing -> Ta.entry t
+                  dueTime = Ta.due t
+                  timeToLocalDate = utcToLocalTime tz >>> localDay
+                  startEndStr = TL.pack (show (timeToLocalDate startTime) <> " -- " <> maybe "" (show . timeToLocalDate) dueTime)
                   uuid = TL.fromStrict $ maybe "" ((<> ",") . T.pack . show) (Ta.id t) <> T.take 8 (UU.toText (Ta.uuid t))
                   toUnderline x = GH.Format GH.Underline [GH.Str x]
                   textToTextItem =
@@ -122,6 +129,8 @@ taskGraphVis hls =
                  in
                   GH.Text
                     [ textToTextItem des
+                    , GH.Newline []
+                    , textToTextItem startEndStr
                     , GH.Newline []
                     , textToTextItem uuid
                     ]
@@ -144,24 +153,24 @@ data RenderOption = RenderOption
   , highlights :: [Ta.Tag]
   }
 
-taskJsonToDotPure :: RenderOption -> BL.ByteString -> T.Text
-taskJsonToDotPure os =
+taskJsonToDotPure :: TimeZone -> RenderOption -> BL.ByteString -> T.Text
+taskJsonToDotPure tz os =
   taskDeserialize
     >>> (if showOutside os then getClosurePure else getClosureWithoutOutside)
     >>> (if showDeleted os then id else purgeDeleted)
     >>> tasksClosureToGraph
-    >>> taskGraphVis (highlights os)
+    >>> taskGraphVis tz (highlights os)
     >>> GV.printDotGraph
     >>> TL.toStrict
 
-taskJsonToDotImpure :: RenderOption -> BL.ByteString -> IO T.Text
-taskJsonToDotImpure os =
+taskJsonToDotImpure :: TimeZone -> RenderOption -> BL.ByteString -> IO T.Text
+taskJsonToDotImpure tz os =
   taskDeserialize
     >>> getClosureImpure
     >>> fmap
       ( (if showDeleted os then id else purgeDeleted)
           >>> tasksClosureToGraph
-          >>> taskGraphVis (highlights os)
+          >>> taskGraphVis tz (highlights os)
           >>> GV.printDotGraph
           >>> TL.toStrict
       )
