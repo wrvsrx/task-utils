@@ -84,9 +84,11 @@ executable taskwarrior-utils
     , fgl
     , graphviz
     , optparse-applicative
+    , pretty-simple
     , taskwarrior
     , text
     , time
+    , unicode-show
     , uuid
 
   -- Directories containing source files.

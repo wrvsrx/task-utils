@@ -2,10 +2,10 @@
 {-# LANGUAGE TupleSections #-}
 
 module Task (
-  taskJsonToDotPure,
-  taskJsonToDotImpure,
+  tasksToDotImpure,
+  getClosureImpure,
   RenderOption (..),
-  taskToClosure,
+  taskDeserialize,
 ) where
 
 import Control.Arrow ((>>>))
@@ -23,7 +23,6 @@ import Data.Set ((\\))
 import Data.Set qualified as S
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
-import Data.Time qualified as Time
 import Data.Time.LocalTime (TimeZone, localDay, utcToLocalTime)
 import Data.Tuple (swap)
 import Data.UUID (UUID)
@@ -41,17 +40,6 @@ getDepsNodeOfATask m = Ta.depends >>> S.toList >>> map (fromJust . (`M.lookup` m
 
 getEdgesOfTaskInClosure :: M.Map UUID Int -> (Task, Node) -> [(Node, Node)]
 getEdgesOfTaskInClosure m (t, n) = getDepsNodeOfATask m t & map (n,)
-
-getClosurePure :: [Task] -> [Task]
-getClosurePure ts =
-  let
-    tasksUUIDSet = S.fromList (map Ta.uuid ts)
-    depsUUIDSet = mconcat (map Ta.depends ts)
-    outsideDepsUUIDSet = depsUUIDSet \\ tasksUUIDSet
-    zeroUTC = Time.UTCTime (Time.ModifiedJulianDay 0) (Time.secondsToDiffTime 0)
-    outsideTasks = map (\x -> (Ta.makeTask x zeroUTC "outside"){Ta.status = Ta.Completed zeroUTC}) (S.toList outsideDepsUUIDSet)
-   in
-    ts <> outsideTasks
 
 -- closed input -> closed output
 -- open input -> ? output
@@ -149,24 +137,12 @@ taskGraphVis tz hls =
 
 data RenderOption = RenderOption
   { showDeleted :: Bool
-  , showOutside :: Bool
   , highlights :: [Ta.Tag]
   }
 
-taskJsonToDotPure :: TimeZone -> RenderOption -> BL.ByteString -> T.Text
-taskJsonToDotPure tz os =
-  taskDeserialize
-    >>> (if showOutside os then getClosurePure else getClosureWithoutOutside)
-    >>> (if showDeleted os then id else purgeDeleted)
-    >>> tasksClosureToGraph
-    >>> taskGraphVis tz (highlights os)
-    >>> GV.printDotGraph
-    >>> TL.toStrict
-
-taskJsonToDotImpure :: TimeZone -> RenderOption -> BL.ByteString -> IO T.Text
-taskJsonToDotImpure tz os =
-  taskDeserialize
-    >>> getClosureImpure
+tasksToDotImpure :: TimeZone -> RenderOption -> [Task] -> IO T.Text
+tasksToDotImpure tz os =
+  getClosureImpure
     >>> fmap
       ( (if showDeleted os then id else purgeDeleted)
           >>> tasksClosureToGraph
@@ -174,8 +150,3 @@ taskJsonToDotImpure tz os =
           >>> GV.printDotGraph
           >>> TL.toStrict
       )
-
-taskToClosure :: BL.ByteString -> IO T.Text
-taskToClosure tJSON = do
-  ts <- taskDeserialize tJSON & getClosureImpure
-  return $ map (UU.toText . Ta.uuid) ts & T.unlines

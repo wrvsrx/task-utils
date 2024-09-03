@@ -3,23 +3,24 @@
 module Cli (
   VisOption (..),
   ClosureOption (..),
-  TotalOption,
+  TotalOption (..),
   totalParser,
 ) where
 
 import Data.Text qualified as T
 import Options.Applicative
 
-data ClosureOption = ClosureOption
+newtype ClosureOption = ClosureOption [T.Text]
 
 data VisOption = VisOption
   { optHighlights :: [T.Text]
-  , optImpure :: Bool
-  , optOutside :: Bool
   , optDeleted :: Bool
+  , optFilter :: [T.Text]
   }
 
-type TotalOption = Either ClosureOption VisOption
+data TotalOption
+  = Closure ClosureOption
+  | Vis VisOption
 
 parseHighlights :: String -> Either String [T.Text]
 parseHighlights = Right . T.splitOn "," . T.pack
@@ -36,14 +37,13 @@ visParser =
               <> value []
               <> help "Tags to be highlighted."
           )
-        <*> flag False True (long "impure" <> short 'i' <> help "Enable impure mode. In impure mode, dependency closure will be visualized.")
-        <*> flag False True (long "outside" <> short 'o' <> help "Show tasks not appearing in input json as `outside`.")
         <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
+        <*> many (argument str (metavar "FILTER"))
    in
-    Right <$> vis
+    Vis <$> vis
 
 closureParser :: Parser TotalOption
-closureParser = pure (Left ClosureOption)
+closureParser = Closure . ClosureOption <$> many (argument str (metavar "FILTER"))
 
 totalParser :: Parser TotalOption
 totalParser =
