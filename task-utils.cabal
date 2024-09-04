@@ -85,6 +85,7 @@ executable task-utils
     , graphviz
     , optparse-applicative
     , pretty-simple
+    , process
     , taskwarrior
     , text
     , time

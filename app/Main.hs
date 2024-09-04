@@ -1,5 +1,9 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module Main where
 
@@ -9,9 +13,15 @@ import Data.Function ((&))
 import Data.Functor ((<&>))
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Data.Time (LocalTime (localDay), getCurrentTime, getTimeZone, showGregorian, utcToLocalTime)
+import Data.Time (
+  LocalTime (localDay),
+  getCurrentTime,
+  showGregorian,
+  utcToLocalTime,
+ )
 import Data.Time.LocalTime (getCurrentTimeZone)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
+import System.Process (rawSystem)
 import Task (
   RenderOption (..),
   getClosureImpure,
@@ -19,7 +29,14 @@ import Task (
   tasksToDotImpure,
  )
 import Taskwarrior.IO (getTasks)
-import Text.Pretty.Simple (pPrint)
+import Taskwarrior.Task (Task (..))
+
+listTask :: [Task] -> IO ()
+listTask tasks = do
+  let
+    uuids = map (show . (.uuid)) tasks
+  _ <- rawSystem "task" (uuids <> ["list"])
+  return ()
 
 main :: IO ()
 main = do
@@ -37,15 +54,14 @@ main = do
     Closure (ClosureOption filters) -> do
       tasks <- getTasks filters
       taskClosure <- getClosureImpure tasks
-      pPrint taskClosure
+      listTask taskClosure
     Today -> do
       tz <- getCurrentTimeZone
       today <- getCurrentTime <&> utcToLocalTime tz <&> (.localDay)
       let
-        todayS = showGregorian today
         filters =
           [ "entry.after:" <> showGregorian today <> "T00:00:00"
           , "entry.before:" <> showGregorian (succ today) <> "T00:00:00"
           ]
       tasks <- getTasks (map T.pack filters)
-      pPrint tasks
+      listTask tasks
