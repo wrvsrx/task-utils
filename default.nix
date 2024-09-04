@@ -3,7 +3,7 @@
 , unicode-show, uuid
 }:
 mkDerivation {
-  pname = "taskwarrior-to-dot";
+  pname = "task-utils";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = false;
@@ -14,5 +14,5 @@ mkDerivation {
   ];
   homepage = "https://github.com/wrvsrx/taskwarrior-to-dot";
   license = lib.licenses.mit;
-  mainProgram = "taskwarrior-utils";
+  mainProgram = "task-utils";
 }

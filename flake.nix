@@ -16,6 +16,7 @@
         nativeBuildInputs = with pkgs; [
           haskellPackages.cabal-fmt
           cabal2nix
+          cabal-install
         ];
       };
       formatter = pkgs.nixpkgs-fmt;
