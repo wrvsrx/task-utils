@@ -90,6 +90,7 @@ executable task-utils
     , text
     , time
     , unicode-show
+    , utf8-string
     , uuid
 
   -- Directories containing source files.

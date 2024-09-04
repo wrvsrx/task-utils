@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module Cli (
   VisOption (..),
   ClosureOption (..),
   TotalOption (..),
+  EventOption (..),
   totalParser,
 ) where
 
@@ -18,15 +20,23 @@ data VisOption = VisOption
   , optFilter :: [T.Text]
   }
 
+data EventOption = EventOption
+  { summary :: T.Text
+  , start :: T.Text
+  , end :: T.Text
+  , task :: Maybe T.Text
+  }
+
 data TotalOption
   = Closure ClosureOption
   | Vis VisOption
   | Today
+  | Event EventOption
 
 parseHighlights :: String -> Either String [T.Text]
 parseHighlights = Right . T.splitOn "," . T.pack
 
-visParser :: Parser TotalOption
+visParser :: Parser VisOption
 visParser =
   let
     vis =
@@ -41,17 +51,24 @@ visParser =
         <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
         <*> many (argument str (metavar "FILTER"))
    in
-    Vis <$> vis
+    vis
 
-closureParser :: Parser TotalOption
-closureParser = Closure . ClosureOption <$> many (argument str (metavar "FILTER"))
+closureParser :: Parser ClosureOption
+closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
 
-todayClosure :: Parser TotalOption
-todayClosure = pure Today
+eventParser :: Parser EventOption
+eventParser =
+  EventOption
+    <$> argument str (metavar "SUMMARY")
+    <*> argument str (metavar "START")
+    <*> argument str (metavar "END")
+    <*> optional (argument str (metavar "TASK"))
 
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
-    ( command "visualize" (info visParser idm)
-        <> command "closure" (info closureParser idm)
-        <> command "today" (info todayClosure idm))
+    ( command "visualize" (info (Vis <$> visParser) idm)
+        <> command "closure" (info (Closure <$> closureParser) idm)
+        <> command "today" (info (pure Today) idm)
+        <> command "event" (info (Event <$> eventParser) idm)
+    )
