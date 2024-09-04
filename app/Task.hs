@@ -56,14 +56,6 @@ purgeDeleted ts =
       & filter (\t -> case Ta.status t of Ta.Deleted _ -> False; _ -> True)
       & map (\t -> t{Ta.depends = Ta.depends t \\ deletedUUIDSet})
 
-getClosureWithoutOutside :: [Task] -> [Task]
-getClosureWithoutOutside ts =
-  let
-    uuidSet = S.fromList (map Ta.uuid ts)
-    purgeOutsideDep t = t{Ta.depends = Ta.depends t `S.intersection` uuidSet}
-   in
-    map purgeOutsideDep ts
-
 getClosureImpure :: [Task] -> IO [Task]
 getClosureImpure ts =
   let
