@@ -35,8 +35,11 @@ listTask :: [Task] -> IO ()
 listTask tasks = do
   let
     uuids = map (show . (.uuid)) tasks
-  _ <- rawSystem "task" (uuids <> ["list"])
-  return ()
+  if null tasks
+    then putStrLn "No tasks found"
+    else do
+      _ <- rawSystem "task" (uuids <> ["list"])
+      return ()
 
 main :: IO ()
 main = do
