@@ -21,6 +21,7 @@ data VisOption = VisOption
 data TotalOption
   = Closure ClosureOption
   | Vis VisOption
+  | Today
 
 parseHighlights :: String -> Either String [T.Text]
 parseHighlights = Right . T.splitOn "," . T.pack
@@ -45,9 +46,12 @@ visParser =
 closureParser :: Parser TotalOption
 closureParser = Closure . ClosureOption <$> many (argument str (metavar "FILTER"))
 
+todayClosure :: Parser TotalOption
+todayClosure = pure Today
+
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
     ( command "visualize" (info visParser idm)
         <> command "closure" (info closureParser idm)
-    )
+        <> command "today" (info todayClosure idm))
