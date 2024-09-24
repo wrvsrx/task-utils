@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
@@ -7,11 +8,13 @@ module Cli (
   TotalOption (..),
   EventOption (..),
   DateOption (..),
+  ModOption (..),
+  DateModOption (..),
   totalParser,
 ) where
 
 import Data.Text qualified as T
-import Data.Time (Day (..), defaultTimeLocale, parseTimeM)
+import Data.Time (Day (..))
 import Options.Applicative
 
 newtype ClosureOption = ClosureOption [T.Text]
@@ -32,11 +35,20 @@ data EventOption = EventOption
 data TotalOption
   = Closure ClosureOption
   | Vis VisOption
-  | Today
-  | Date DateOption
   | Event EventOption
+  | Mod ModOption
 
-newtype DateOption = DateOption Day
+data DateModOption = DateModOption
+  { date :: Day
+  , modifier :: [T.Text]
+  }
+
+data ModOption = ModOption
+  { filter :: [T.Text]
+  , modifier :: [T.Text]
+  }
+
+newtype DateOption = DateOption (Maybe Day)
 
 parseHighlights :: String -> Either String [T.Text]
 parseHighlights = Right . T.splitOn "," . T.pack
@@ -61,6 +73,12 @@ visParser =
 closureParser :: Parser ClosureOption
 closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
 
+modParser :: Parser ModOption
+modParser =
+  ModOption
+    <$> many (argument (maybeReader (\x -> if x /= "," then Just (T.pack x) else Nothing)) (metavar "FILTER"))
+    <*> many (argument str (metavar "MODIFIER"))
+
 eventParser :: Parser EventOption
 eventParser =
   EventOption
@@ -69,21 +87,11 @@ eventParser =
     <*> argument str (metavar "END")
     <*> optional (argument str (metavar "TASK"))
 
-dateParser :: Parser DateOption
-dateParser = DateOption <$> argument dateReader (metavar "DATE")
- where
-  dateReader :: ReadM Day
-  dateReader = eitherReader $ \arg ->
-    case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
-      Just x -> Right x
-      Nothing -> Left "Failed to parse date. The supported formats are YYYYMMDD or YYYY-MM-DD."
-
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
     ( command "visualize" (info (Vis <$> visParser) idm)
         <> command "closure" (info (Closure <$> closureParser) idm)
-        <> command "today" (info (pure Today) idm)
         <> command "event" (info (Event <$> eventParser) idm)
-        <> command "date" (info (Date <$> dateParser) idm)
+        <> command "mod" (info (Mod <$> modParser) idm)
     )

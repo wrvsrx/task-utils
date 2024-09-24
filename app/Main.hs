@@ -13,14 +13,8 @@ import Data.Aeson qualified as A
 import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.UTF8 qualified as BLU
 import Data.Function ((&))
-import Data.Functor ((<&>))
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Data.Time (
-  LocalTime (localDay),
-  getCurrentTime,
-  utcToLocalTime,
- )
 import Data.Time.LocalTime (getCurrentTimeZone)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
@@ -31,7 +25,6 @@ import Task (
   tasksToDotImpure,
  )
 import TaskUtils (
-  dateFilter,
   listTask,
  )
 import Taskwarrior.IO (getTasks)
@@ -54,11 +47,6 @@ main = do
       tasks <- getTasks filters
       taskClosure <- getClosureImpure tasks
       listTask taskClosure
-    Today -> do
-      tz <- getCurrentTimeZone
-      today <- getCurrentTime <&> ((.localDay)) . utcToLocalTime tz
-      tasks <- getTasks (dateFilter today)
-      listTask tasks
     Event (EventOption summary start' end task) -> do
       task' <- do
         case task of
@@ -75,6 +63,6 @@ main = do
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
-    Date (DateOption date) -> do
-      tasks <- getTasks $ dateFilter date
-      listTask tasks
+    Mod (ModOption filters modifiers) -> do
+      _ <- rawSystem "task" $ map T.unpack filters <> ["mod"] <> map T.unpack modifiers
+      return ()
