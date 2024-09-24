@@ -6,10 +6,12 @@ module Cli (
   ClosureOption (..),
   TotalOption (..),
   EventOption (..),
+  DateOption (..),
   totalParser,
 ) where
 
 import Data.Text qualified as T
+import Data.Time (Day (..), defaultTimeLocale, parseTimeM)
 import Options.Applicative
 
 newtype ClosureOption = ClosureOption [T.Text]
@@ -31,7 +33,10 @@ data TotalOption
   = Closure ClosureOption
   | Vis VisOption
   | Today
+  | Date DateOption
   | Event EventOption
+
+newtype DateOption = DateOption Day
 
 parseHighlights :: String -> Either String [T.Text]
 parseHighlights = Right . T.splitOn "," . T.pack
@@ -64,6 +69,15 @@ eventParser =
     <*> argument str (metavar "END")
     <*> optional (argument str (metavar "TASK"))
 
+dateParser :: Parser DateOption
+dateParser = DateOption <$> argument dateReader (metavar "DATE")
+ where
+  dateReader :: ReadM Day
+  dateReader = eitherReader $ \arg ->
+    case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
+      Just x -> Right x
+      Nothing -> Left "Failed to parse date. The supported formats are YYYYMMDD or YYYY-MM-DD."
+
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
@@ -71,4 +85,5 @@ totalParser =
         <> command "closure" (info (Closure <$> closureParser) idm)
         <> command "today" (info (pure Today) idm)
         <> command "event" (info (Event <$> eventParser) idm)
+        <> command "date" (info (Date <$> dateParser) idm)
     )

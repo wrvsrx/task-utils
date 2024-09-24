@@ -19,7 +19,6 @@ import Data.Text.IO qualified as T
 import Data.Time (
   LocalTime (localDay),
   getCurrentTime,
-  showGregorian,
   utcToLocalTime,
  )
 import Data.Time.LocalTime (getCurrentTimeZone)
@@ -31,18 +30,12 @@ import Task (
   taskDeserialize,
   tasksToDotImpure,
  )
+import TaskUtils (
+  dateFilter,
+  listTask,
+ )
 import Taskwarrior.IO (getTasks)
 import Taskwarrior.Task (Task (..))
-
-listTask :: [Task] -> IO ()
-listTask tasks = do
-  let
-    uuids = map (show . (.uuid)) tasks
-  if null tasks
-    then putStrLn "No tasks found"
-    else do
-      _ <- rawSystem "task" (uuids <> ["list"])
-      return ()
 
 main :: IO ()
 main = do
@@ -63,15 +56,10 @@ main = do
       listTask taskClosure
     Today -> do
       tz <- getCurrentTimeZone
-      today <- getCurrentTime <&> utcToLocalTime tz <&> (.localDay)
-      let
-        filters =
-          [ "entry.after:" <> showGregorian today <> "T00:00:00"
-          , "entry.before:" <> showGregorian (succ today) <> "T00:00:00"
-          ]
-      tasks <- getTasks (map T.pack filters)
+      today <- getCurrentTime <&> ((.localDay)) . utcToLocalTime tz
+      tasks <- getTasks (dateFilter today)
       listTask tasks
-    Event (EventOption summary start end task) -> do
+    Event (EventOption summary start' end task) -> do
       task' <- do
         case task of
           Just t -> do
@@ -83,7 +71,10 @@ main = do
           Nothing -> return Nothing
       _ <-
         rawSystem "khal" $
-          ["new", T.unpack start, T.unpack end, T.unpack summary] <> case task' of
+          ["new", T.unpack start', T.unpack end, T.unpack summary] <> case task' of
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
+    Date (DateOption date) -> do
+      tasks <- getTasks $ dateFilter date
+      listTask tasks

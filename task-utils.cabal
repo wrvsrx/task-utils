@@ -69,6 +69,7 @@ executable task-utils
   other-modules:
     Cli
     Task
+    TaskUtils
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
