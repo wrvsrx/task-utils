@@ -28,3 +28,5 @@ cabal.project.local~
 
 # test html
 output.html
+
+/result
