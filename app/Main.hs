@@ -13,6 +13,7 @@ import Data.Aeson qualified as A
 import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.UTF8 qualified as BLU
 import Data.Function ((&))
+import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Time (defaultTimeLocale, formatTime)
@@ -26,6 +27,7 @@ import Task (
   tasksToDotImpure,
  )
 import TaskUtils (
+  getToday,
   listFromFilter,
   listTask,
   modTask,
@@ -70,3 +72,7 @@ main = do
     DateTag day -> modTask ["entry:" <> show day] [formatTime defaultTimeLocale "+d%Y%m%d" day]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" show maybeDay]
     Search filters -> listFromFilter filters
+    ListEvent maybeDay -> do
+      today <- getToday
+      _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
+      return ()

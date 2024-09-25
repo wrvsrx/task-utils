@@ -38,6 +38,7 @@ data TotalOption
   | DateTag Day
   | Date (Maybe Day)
   | Search [String]
+  | ListEvent (Maybe Day)
 
 data ModOption = ModOption
   { filters :: [String]
@@ -95,4 +96,5 @@ totalParser =
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
         <> command "search" (info (Search <$> many (argument str (metavar "FILTER"))) idm)
+        <> command "list-event" (info (ListEvent <$> optional dateParser) idm)
     )

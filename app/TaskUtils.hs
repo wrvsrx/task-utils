@@ -6,9 +6,18 @@ module TaskUtils (
   listTask,
   listFromFilter,
   modTask,
+  getToday,
 )
 where
 
+import Data.Functor ((<&>))
+import Data.Time (
+  Day (..),
+  LocalTime (..),
+  getCurrentTime,
+  getCurrentTimeZone,
+  utcToLocalTime,
+ )
 import System.Process (rawSystem)
 import Taskwarrior.Task (Task (..))
 
@@ -31,3 +40,8 @@ modTask :: [String] -> [String] -> IO ()
 modTask filters modfiers = do
   _ <- rawSystem "task" (filters <> ["mod"] <> modfiers)
   return ()
+
+getToday :: IO Day
+getToday = do
+  tz <- getCurrentTimeZone
+  getCurrentTime <&> ((.localDay)) . utcToLocalTime tz
