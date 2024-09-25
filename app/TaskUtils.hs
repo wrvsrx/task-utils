@@ -4,6 +4,8 @@
 
 module TaskUtils (
   listTask,
+  listFromFilter,
+  modTask,
 )
 where
 
@@ -19,3 +21,13 @@ listTask tasks = do
     else do
       _ <- rawSystem "task" (uuids <> ["all"])
       return ()
+
+listFromFilter :: [String] -> IO ()
+listFromFilter filters = do
+  _ <- rawSystem "task" (filters <> ["all"])
+  return ()
+
+modTask :: [String] -> [String] -> IO ()
+modTask filters modfiers = do
+  _ <- rawSystem "task" (filters <> ["mod"] <> modfiers)
+  return ()

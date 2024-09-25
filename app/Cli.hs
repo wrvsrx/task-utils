@@ -7,14 +7,12 @@ module Cli (
   ClosureOption (..),
   TotalOption (..),
   EventOption (..),
-  DateOption (..),
   ModOption (..),
-  DateModOption (..),
   totalParser,
 ) where
 
 import Data.Text qualified as T
-import Data.Time (Day (..))
+import Data.Time (Day (..), defaultTimeLocale, parseTimeM)
 import Options.Applicative
 
 newtype ClosureOption = ClosureOption [T.Text]
@@ -37,18 +35,13 @@ data TotalOption
   | Vis VisOption
   | Event EventOption
   | Mod ModOption
-
-data DateModOption = DateModOption
-  { date :: Day
-  , modifier :: [T.Text]
-  }
+  | DateTag Day
+  | Date (Maybe Day)
 
 data ModOption = ModOption
-  { filter :: [T.Text]
-  , modifier :: [T.Text]
+  { filter :: [String]
+  , modifier :: [String]
   }
-
-newtype DateOption = DateOption (Maybe Day)
 
 parseHighlights :: String -> Either String [T.Text]
 parseHighlights = Right . T.splitOn "," . T.pack
@@ -76,7 +69,7 @@ closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
 modParser :: Parser ModOption
 modParser =
   ModOption
-    <$> many (argument (maybeReader (\x -> if x /= "," then Just (T.pack x) else Nothing)) (metavar "FILTER"))
+    <$> many (argument (maybeReader (\x -> if x /= "," then Just x else Nothing)) (metavar "FILTER"))
     <*> many (argument str (metavar "MODIFIER"))
 
 eventParser :: Parser EventOption
@@ -87,6 +80,14 @@ eventParser =
     <*> argument str (metavar "END")
     <*> optional (argument str (metavar "TASK"))
 
+dateParser :: Parser Day
+dateParser = argument reader (metavar "DATE")
+ where
+  reader = eitherReader $ \arg ->
+    case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
+      Just x -> Right x
+      Nothing -> Left "Failed to parse date. The supported formats are YYYYMMDD or YYYY-MM-DD."
+
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
@@ -94,4 +95,6 @@ totalParser =
         <> command "closure" (info (Closure <$> closureParser) idm)
         <> command "event" (info (Event <$> eventParser) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
+        <> command "date-tag" (info (DateTag <$> dateParser) idm)
+        <> command "date" (info (Date <$> optional dateParser) idm)
     )

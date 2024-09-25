@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Main where
+module Main (main) where
 
 import Cli
 import Data.Aeson ((.=))
@@ -13,8 +13,10 @@ import Data.Aeson qualified as A
 import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.UTF8 qualified as BLU
 import Data.Function ((&))
+import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
+import Data.Time (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (getCurrentTimeZone)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
@@ -25,7 +27,9 @@ import Task (
   tasksToDotImpure,
  )
 import TaskUtils (
+  listFromFilter,
   listTask,
+  modTask,
  )
 import Taskwarrior.IO (getTasks)
 import Taskwarrior.Task (Task (..))
@@ -63,6 +67,6 @@ main = do
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
-    Mod (ModOption filters modifiers) -> do
-      _ <- rawSystem "task" $ map T.unpack filters <> ["mod"] <> map T.unpack modifiers
-      return ()
+    Mod (ModOption filters modifiers) -> modTask filters modifiers
+    DateTag day -> modTask ["entry:" <> show day] [formatTime defaultTimeLocale "+d%Y%m%d" day]
+    Date maybeDay -> listFromFilter ["entry:" <> maybe "today" show maybeDay]
