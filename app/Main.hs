@@ -39,11 +39,11 @@ main = do
   case totalOpt of
     Vis opt -> do
       let
-        renderOpt = RenderOption{highlights = opt.optHighlights, showDeleted = opt.optDeleted}
+        renderOpt = RenderOption{highlights = opt.highlights, showDeleted = opt.deleted}
       tasks <-
-        if opt.optFilter == ["-"]
+        if opt.filters == ["-"]
           then taskDeserialize <$> BL.getContents
-          else getTasks opt.optFilter
+          else getTasks opt.filters
       tz <- getCurrentTimeZone
       tasks & tasksToDotImpure tz renderOpt >>= T.putStrLn
     Closure (ClosureOption filters) -> do

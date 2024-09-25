@@ -18,9 +18,9 @@ import Options.Applicative
 newtype ClosureOption = ClosureOption [T.Text]
 
 data VisOption = VisOption
-  { optHighlights :: [T.Text]
-  , optDeleted :: Bool
-  , optFilter :: [T.Text]
+  { highlights :: [T.Text]
+  , deleted :: Bool
+  , filters :: [T.Text]
   }
 
 data EventOption = EventOption
@@ -40,8 +40,8 @@ data TotalOption
   | Search [String]
 
 data ModOption = ModOption
-  { filter :: [String]
-  , modifier :: [String]
+  { filters :: [String]
+  , modifiers :: [String]
   }
 
 parseHighlights :: String -> Either String [T.Text]
@@ -49,20 +49,16 @@ parseHighlights = Right . T.splitOn "," . T.pack
 
 visParser :: Parser VisOption
 visParser =
-  let
-    vis =
-      VisOption
-        <$> option
-          (eitherReader parseHighlights)
-          ( long "highlights"
-              <> short 'h'
-              <> value []
-              <> help "Tags to be highlighted."
-          )
-        <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
-        <*> many (argument str (metavar "FILTER"))
-   in
-    vis
+  VisOption
+    <$> option
+      (eitherReader parseHighlights)
+      ( long "highlights"
+          <> short 'h'
+          <> value []
+          <> help "Tags to be highlighted."
+      )
+    <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
+    <*> many (argument str (metavar "FILTER"))
 
 closureParser :: Parser ClosureOption
 closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
