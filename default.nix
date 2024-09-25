@@ -13,7 +13,7 @@ mkDerivation {
     pretty-simple process taskwarrior text time unicode-show
     utf8-string uuid
   ];
-  homepage = "https://github.com/wrvsrx/taskwarrior-to-dot";
+  homepage = "https://github.com/wrvsrx/task-utils";
   license = lib.licenses.mit;
   mainProgram = "task-utils";
 }
