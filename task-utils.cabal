@@ -30,7 +30,7 @@ version:         0.1.0.0
 -- description:
 
 -- URL for the project homepage or repository.
-homepage:        https://github.com/wrvsrx/taskwarrior-to-dot
+homepage:        https://github.com/wrvsrx/task-utils
 
 -- The license under which the package is released.
 license:         MIT
