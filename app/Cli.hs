@@ -66,7 +66,7 @@ closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
 modParser :: Parser ModOption
 modParser =
   ModOption
-    <$> many (argument (maybeReader (\x -> if x /= "," then Just x else Nothing)) (metavar "FILTER"))
+    <$> many (argument (maybeReader (\x -> if x /= "-" then Just x else Nothing)) (metavar "FILTER"))
     <*> many (argument str (metavar "MODIFIER"))
 
 eventParser :: Parser EventOption
