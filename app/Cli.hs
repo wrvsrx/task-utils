@@ -35,10 +35,11 @@ data TotalOption
   | Vis VisOption
   | Event EventOption
   | Mod ModOption
-  | DateTag Day
-  | Date (Maybe Day)
-  | Search [String]
+  | ListTask [String]
   | ListEvent (Maybe Day)
+  | -- shortcuts
+    Date (Maybe Day)
+  | DateTag Day
 
 data ModOption = ModOption
   { filters :: [String]
@@ -91,10 +92,10 @@ totalParser =
   hsubparser
     ( command "visualize" (info (Vis <$> visParser) idm)
         <> command "closure" (info (Closure <$> closureParser) idm)
-        <> command "event" (info (Event <$> eventParser) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
-        <> command "search" (info (Search <$> many (argument str (metavar "FILTER"))) idm)
+        <> command "list-task" (info (ListTask <$> many (argument str (metavar "FILTER"))) idm)
+        <> command "add-event" (info (Event <$> eventParser) idm)
         <> command "list-event" (info (ListEvent <$> optional dateParser) idm)
     )

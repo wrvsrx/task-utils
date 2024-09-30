@@ -71,7 +71,7 @@ main = do
     Mod (ModOption filters modifiers) -> modTask filters modifiers
     DateTag day -> modTask ["entry:" <> show day] [formatTime defaultTimeLocale "+d%Y%m%d" day]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" show maybeDay]
-    Search filters -> listFromFilter filters
+    ListTask filters -> listFromFilter filters
     ListEvent maybeDay -> do
       today <- getToday
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
