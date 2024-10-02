@@ -6,6 +6,7 @@ module TaskUtils (
   listTask,
   listFromFilter,
   modTask,
+  finishTask,
   getToday,
 )
 where
@@ -40,6 +41,11 @@ listFromFilter filters = do
 modTask :: [T.Text] -> [T.Text] -> IO ()
 modTask filters modfiers = do
   _ <- rawSystem "task" (map T.unpack filters <> ["mod"] <> map T.unpack modfiers)
+  return ()
+
+finishTask :: [T.Text] -> IO ()
+finishTask filters = do
+  _ <- rawSystem "task" (map T.unpack filters <> ["done"])
   return ()
 
 getToday :: IO Day

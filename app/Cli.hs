@@ -33,7 +33,9 @@ data TotalOption
   | Event EventOption
   | Mod ModOption
   | ListTask T.Text
+  | PendingTask T.Text
   | ListEvent (Maybe Day)
+  | Done T.Text
   | -- shortcuts
     Date (Maybe Day)
   | DateTag Day
@@ -87,9 +89,10 @@ totalParser =
     ( command "visualize" (info (Vis <$> visParser) idm)
         <> command "closure" (info (Closure <$> argument str (metavar "FILTER")) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
+        <> command "add-event" (info (Event <$> eventParser) idm)
+        <> command "list-task" (info (ListTask <$> argument str (metavar "FILTER")) idm)
+        <> command "pending-task" (info (PendingTask <$> argument str (metavar "FILTER")) idm)
+        <> command "finish-task" (info (Done <$> argument str (metavar "FILTER")) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
-        <> command "list-task" (info (ListTask <$> argument str (metavar "FILTER")) idm)
-        <> command "add-event" (info (Event <$> eventParser) idm)
-        <> command "list-event" (info (ListEvent <$> optional dateParser) idm)
     )
