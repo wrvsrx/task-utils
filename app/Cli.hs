@@ -31,11 +31,11 @@ data TotalOption
   = Closure (Maybe T.Text)
   | Vis VisOption
   | Event EventOption
+  | ListEvent (Maybe Day)
   | Mod ModOption
   | ListTask (Maybe T.Text)
   | PendingTask (Maybe T.Text)
   | FinishTask (Maybe T.Text)
-  | ListEvent (Maybe Day)
   | -- shortcuts
     Date (Maybe Day)
   | DateTag Day
@@ -93,6 +93,7 @@ totalParser =
         <> command "closure" (info (Closure <$> filterParser) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
+        <> command "list-event" (info (ListEvent <$> optional dateParser) idm)
         <> command "list-task" (info (ListTask <$> filterParser) idm)
         <> command "pending-task" (info (PendingTask <$> filterParser) idm)
         <> command "finish-task" (info (FinishTask <$> filterParser) idm)
