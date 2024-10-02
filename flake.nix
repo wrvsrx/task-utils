@@ -17,8 +17,10 @@
           { pkgs, ... }:
           rec {
             packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
-            devShells.default = pkgs.mkShell {
-              inputsFrom = [ packages.default.env ];
+            devShells.default = pkgs.haskellPackages.shellFor {
+              packages = _: [
+                packages.default
+              ];
               nativeBuildInputs = with pkgs; [
                 haskellPackages.cabal-fmt
                 cabal2nix
