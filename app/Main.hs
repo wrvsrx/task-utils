@@ -18,6 +18,7 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (getCurrentTimeZone)
+import FilterParser (parseFilter)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
 import Task (
@@ -68,10 +69,16 @@ main = do
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
-    Mod (ModOption filter' modifiers) -> modTask filter' modifiers
-    DateTag day -> modTask ("entry:" <> show day) [formatTime defaultTimeLocale "+d%Y%m%d" day]
+    Mod (ModOption filter' modifiers) -> do
+      let
+        filters = either (error . show) Prelude.id (parseFilter filter')
+      modTask filters modifiers
+    DateTag day -> modTask ["entry:" <> show day] [formatTime defaultTimeLocale "+d%Y%m%d" day]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" show maybeDay]
-    ListTask filters -> listFromFilter filters
+    ListTask filter' -> do
+      let
+        filters = either (error . show) Prelude.id (parseFilter filter')
+      listFromFilter filters
     ListEvent maybeDay -> do
       today <- getToday
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]

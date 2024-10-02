@@ -1,6 +1,6 @@
 { mkDerivation, aeson, base, bytestring, containers, fgl, graphviz
-, lib, optparse-applicative, pretty-simple, process, taskwarrior
-, text, time, unicode-show, utf8-string, uuid
+, lib, optparse-applicative, parsec, pretty-simple, process
+, taskwarrior, text, time, unicode-show, utf8-string, uuid
 }:
 mkDerivation {
   pname = "task-utils";
@@ -10,7 +10,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     aeson base bytestring containers fgl graphviz optparse-applicative
-    pretty-simple process taskwarrior text time unicode-show
+    parsec pretty-simple process taskwarrior text time unicode-show
     utf8-string uuid
   ];
   homepage = "https://github.com/wrvsrx/task-utils";

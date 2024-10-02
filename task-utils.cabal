@@ -68,6 +68,7 @@ executable task-utils
   -- Modules included in this executable, other than Main.
   other-modules:
     Cli
+    FilterParser
     Task
     TaskUtils
 
@@ -85,6 +86,7 @@ executable task-utils
     , fgl
     , graphviz
     , optparse-applicative
+    , parsec
     , pretty-simple
     , process
     , taskwarrior

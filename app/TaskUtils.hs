@@ -36,9 +36,9 @@ listFromFilter filters = do
   _ <- rawSystem "task" (filters <> ["all"])
   return ()
 
-modTask :: String -> [String] -> IO ()
-modTask filter' modfiers = do
-  _ <- rawSystem "task" ([filter', "mod"] <> modfiers)
+modTask :: [String] -> [String] -> IO ()
+modTask filters modfiers = do
+  _ <- rawSystem "task" (filters <> ["mod"] <> modfiers)
   return ()
 
 getToday :: IO Day

@@ -35,7 +35,7 @@ data TotalOption
   | Vis VisOption
   | Event EventOption
   | Mod ModOption
-  | ListTask [String]
+  | ListTask String
   | ListEvent (Maybe Day)
   | -- shortcuts
     Date (Maybe Day)
@@ -95,7 +95,7 @@ totalParser =
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
-        <> command "list-task" (info (ListTask <$> many (argument str (metavar "FILTER"))) idm)
+        <> command "list-task" (info (ListTask <$>  argument str (metavar "FILTER")) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
         <> command "list-event" (info (ListEvent <$> optional dateParser) idm)
     )
