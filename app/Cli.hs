@@ -17,7 +17,7 @@ import Options.Applicative
 data VisOption = VisOption
   { highlights :: [T.Text]
   , deleted :: Bool
-  , filter :: T.Text
+  , filter :: Maybe T.Text
   }
 
 data EventOption = EventOption
@@ -28,14 +28,14 @@ data EventOption = EventOption
   }
 
 data TotalOption
-  = Closure T.Text
+  = Closure (Maybe T.Text)
   | Vis VisOption
   | Event EventOption
   | Mod ModOption
-  | ListTask T.Text
-  | PendingTask T.Text
+  | ListTask (Maybe T.Text)
+  | PendingTask (Maybe T.Text)
+  | FinishTask (Maybe T.Text)
   | ListEvent (Maybe Day)
-  | Done T.Text
   | -- shortcuts
     Date (Maybe Day)
   | DateTag Day
@@ -59,7 +59,7 @@ visParser =
           <> help "Tags to be highlighted."
       )
     <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
-    <*> argument str (metavar "FILTER")
+    <*> filterParser
 
 modParser :: Parser ModOption
 modParser =
@@ -83,16 +83,19 @@ dateParser = argument reader (metavar "DATE")
       Just x -> Right x
       Nothing -> Left "Failed to parse date. The supported formats are YYYYMMDD or YYYY-MM-DD."
 
+filterParser :: Parser (Maybe T.Text)
+filterParser = optional (argument str (metavar "FILTER"))
+
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
     ( command "visualize" (info (Vis <$> visParser) idm)
-        <> command "closure" (info (Closure <$> argument str (metavar "FILTER")) idm)
+        <> command "closure" (info (Closure <$> filterParser) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
-        <> command "list-task" (info (ListTask <$> argument str (metavar "FILTER")) idm)
-        <> command "pending-task" (info (PendingTask <$> argument str (metavar "FILTER")) idm)
-        <> command "finish-task" (info (Done <$> argument str (metavar "FILTER")) idm)
+        <> command "list-task" (info (ListTask <$> filterParser) idm)
+        <> command "pending-task" (info (PendingTask <$> filterParser) idm)
+        <> command "finish-task" (info (FinishTask <$> filterParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
     )

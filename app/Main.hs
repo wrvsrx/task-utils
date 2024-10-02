@@ -45,7 +45,7 @@ main = do
       let
         renderOpt = RenderOption{highlights = opt.highlights, showDeleted = opt.deleted}
       tasks <-
-        if opt.filter == "-"
+        if opt.filter == Just "-"
           then taskDeserialize <$> BL.getContents
           else getTasks (getFilters opt.filter)
       tz <- getCurrentTimeZone
@@ -70,15 +70,15 @@ main = do
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
-    Mod (ModOption filter' modifiers) -> modTask (getFilters filter') modifiers
+    Mod (ModOption filter' modifiers) -> modTask (getFilters (Just filter')) modifiers
     ListTask filter' -> listFromFilter (getFilters filter')
     PendingTask filter' -> listFromFilter (getFilters filter' <> ["status:pending"])
     ListEvent maybeDay -> do
       today <- getToday
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
       return ()
-    Done filter' -> finishTask (getFilters filter')
+    FinishTask filter' -> finishTask (getFilters filter')
     DateTag day -> modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" (T.pack . show) maybeDay]
  where
-  getFilters = either (error . show) Prelude.id . parseFilter
+  getFilters = maybe [] (either (error . show) Prelude.id . parseFilter)
