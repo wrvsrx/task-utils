@@ -44,13 +44,13 @@ main = do
       let
         renderOpt = RenderOption{highlights = opt.highlights, showDeleted = opt.deleted}
       tasks <-
-        if opt.filters == ["-"]
+        if opt.filter == "-"
           then taskDeserialize <$> BL.getContents
-          else getTasks opt.filters
+          else getTasks (getFilters opt.filter)
       tz <- getCurrentTimeZone
       tasks & tasksToDotImpure tz renderOpt >>= T.putStrLn
-    Closure (ClosureOption filters) -> do
-      tasks <- getTasks filters
+    Closure filter' -> do
+      tasks <- getTasks (getFilters filter')
       taskClosure <- getClosureImpure tasks
       listTask taskClosure
     Event (EventOption summary start' end task) -> do
@@ -69,17 +69,13 @@ main = do
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
-    Mod (ModOption filter' modifiers) -> do
-      let
-        filters = either (error . show) Prelude.id (parseFilter filter')
-      modTask filters modifiers
+    Mod (ModOption filter' modifiers) -> modTask (getFilters filter') modifiers
     DateTag day -> modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" (T.pack . show) maybeDay]
-    ListTask filter' -> do
-      let
-        filters = either (error . show) Prelude.id (parseFilter filter')
-      listFromFilter filters
+    ListTask filter' -> listFromFilter (getFilters filter')
     ListEvent maybeDay -> do
       today <- getToday
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
       return ()
+ where
+  getFilters = either (error . show) Prelude.id . parseFilter

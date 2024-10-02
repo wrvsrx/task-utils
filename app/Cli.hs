@@ -4,7 +4,6 @@
 
 module Cli (
   VisOption (..),
-  ClosureOption (..),
   TotalOption (..),
   EventOption (..),
   ModOption (..),
@@ -15,12 +14,10 @@ import Data.Text qualified as T
 import Data.Time (Day (..), defaultTimeLocale, parseTimeM)
 import Options.Applicative
 
-newtype ClosureOption = ClosureOption [T.Text]
-
 data VisOption = VisOption
   { highlights :: [T.Text]
   , deleted :: Bool
-  , filters :: [T.Text]
+  , filter :: T.Text
   }
 
 data EventOption = EventOption
@@ -31,7 +28,7 @@ data EventOption = EventOption
   }
 
 data TotalOption
-  = Closure ClosureOption
+  = Closure T.Text
   | Vis VisOption
   | Event EventOption
   | Mod ModOption
@@ -60,10 +57,7 @@ visParser =
           <> help "Tags to be highlighted."
       )
     <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
-    <*> many (argument str (metavar "FILTER"))
-
-closureParser :: Parser ClosureOption
-closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
+    <*> argument str (metavar "FILTER")
 
 modParser :: Parser ModOption
 modParser =
@@ -91,7 +85,7 @@ totalParser :: Parser TotalOption
 totalParser =
   hsubparser
     ( command "visualize" (info (Vis <$> visParser) idm)
-        <> command "closure" (info (Closure <$> closureParser) idm)
+        <> command "closure" (info (Closure <$> argument str (metavar "FILTER")) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
