@@ -68,8 +68,8 @@ main = do
             Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
             Nothing -> []
       return ()
-    Mod (ModOption filters modifiers) -> modTask filters modifiers
-    DateTag day -> modTask ["entry:" <> show day] [formatTime defaultTimeLocale "+d%Y%m%d" day]
+    Mod (ModOption filter' modifiers) -> modTask filter' modifiers
+    DateTag day -> modTask ("entry:" <> show day) [formatTime defaultTimeLocale "+d%Y%m%d" day]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" show maybeDay]
     ListTask filters -> listFromFilter filters
     ListEvent maybeDay -> do

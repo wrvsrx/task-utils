@@ -42,7 +42,7 @@ data TotalOption
   | DateTag Day
 
 data ModOption = ModOption
-  { filters :: [String]
+  { filter :: String
   , modifiers :: [String]
   }
 
@@ -68,7 +68,7 @@ closureParser = ClosureOption <$> many (argument str (metavar "FILTER"))
 modParser :: Parser ModOption
 modParser =
   ModOption
-    <$> many (argument (maybeReader (\x -> if x /= "-" then Just x else Nothing)) (metavar "FILTER"))
+    <$> argument str (metavar "FILTER")
     <*> many (argument str (metavar "MODIFIER"))
 
 eventParser :: Parser EventOption
