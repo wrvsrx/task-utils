@@ -78,7 +78,7 @@ main = do
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
       return ()
     FinishTask filter' -> finishTask (getFilters filter')
-    DateTag day -> modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
+    DateTag day -> modTask ["entry:" <> T.pack (show day), "status:pending"] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" (T.pack . show) maybeDay]
  where
   getFilters = maybe [] (either (error . show) Prelude.id . parseFilter)
