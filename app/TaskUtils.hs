@@ -11,6 +11,7 @@ module TaskUtils (
 where
 
 import Data.Functor ((<&>))
+import Data.Text qualified as T
 import Data.Time (
   Day (..),
   LocalTime (..),
@@ -31,14 +32,14 @@ listTask tasks = do
       _ <- rawSystem "task" (uuids <> ["all"])
       return ()
 
-listFromFilter :: [String] -> IO ()
+listFromFilter :: [T.Text] -> IO ()
 listFromFilter filters = do
-  _ <- rawSystem "task" (filters <> ["all"])
+  _ <- rawSystem "task" (map T.unpack filters <> ["all"])
   return ()
 
-modTask :: [String] -> [String] -> IO ()
+modTask :: [T.Text] -> [T.Text] -> IO ()
 modTask filters modfiers = do
-  _ <- rawSystem "task" (filters <> ["mod"] <> modfiers)
+  _ <- rawSystem "task" (map T.unpack filters <> ["mod"] <> map T.unpack modfiers)
   return ()
 
 getToday :: IO Day

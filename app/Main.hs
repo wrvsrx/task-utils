@@ -73,8 +73,8 @@ main = do
       let
         filters = either (error . show) Prelude.id (parseFilter filter')
       modTask filters modifiers
-    DateTag day -> modTask ["entry:" <> show day] [formatTime defaultTimeLocale "+d%Y%m%d" day]
-    Date maybeDay -> listFromFilter ["entry:" <> maybe "today" show maybeDay]
+    DateTag day -> modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
+    Date maybeDay -> listFromFilter ["entry:" <> maybe "today" (T.pack . show) maybeDay]
     ListTask filter' -> do
       let
         filters = either (error . show) Prelude.id (parseFilter filter')
