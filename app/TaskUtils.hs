@@ -8,6 +8,7 @@ module TaskUtils (
   modTask,
   finishTask,
   getToday,
+  addTask,
 )
 where
 
@@ -46,6 +47,11 @@ modTask filters modfiers = do
 finishTask :: [T.Text] -> IO ()
 finishTask filters = do
   _ <- rawSystem "task" (map T.unpack filters <> ["done"])
+  return ()
+
+addTask :: [T.Text] -> IO ()
+addTask filters = do
+  _ <- rawSystem "task" (["add"] <> map T.unpack filters)
   return ()
 
 getToday :: IO Day

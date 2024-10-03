@@ -28,6 +28,7 @@ import Task (
   tasksToDotImpure,
  )
 import TaskUtils (
+  addTask,
   finishTask,
   getToday,
   listFromFilter,
@@ -78,6 +79,7 @@ main = do
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
       return ()
     FinishTask filter' -> finishTask (getFilters filter')
+    AddTask taskInfos -> addTask taskInfos
     DateTag day -> modTask ["entry:" <> T.pack (show day), "status:pending"] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
     Date maybeDay -> listFromFilter ["entry:" <> maybe "today" (T.pack . show) maybeDay]
  where

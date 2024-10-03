@@ -36,6 +36,7 @@ data TotalOption
   | ListTask (Maybe T.Text)
   | PendingTask (Maybe T.Text)
   | FinishTask (Maybe T.Text)
+  | AddTask [T.Text]
   | -- shortcuts
     Date (Maybe Day)
   | DateTag Day
@@ -97,6 +98,7 @@ totalParser =
         <> command "list-task" (info (ListTask <$> filterParser) idm)
         <> command "pending-task" (info (PendingTask <$> filterParser) idm)
         <> command "finish-task" (info (FinishTask <$> filterParser) idm)
+        <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> optional dateParser) idm)
     )
