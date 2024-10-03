@@ -43,7 +43,7 @@ renderFilter (PredictExpr (StringExpr str)) =
   case () of
     _ | T.length str > 0 && T.head str `elem` ['+', '-'] -> [str]
     _ | all (`elem` ['0' .. '9']) (T.unpack str) -> ["id:" <> str]
-    _ -> ["description:" <> str]
+    _ -> ["description.contains:" <> str]
 renderFilter (AndExpr left right) = ["("] <> renderFilter left <> [")", "and", "("] <> renderFilter right <> [")"]
 renderFilter (OrExpr left right) = ["("] <> renderFilter left <> [")", "or", "("] <> renderFilter right <> [")"]
 renderFilter (NotExpr expr') = ["not", "("] <> renderFilter expr' <> [")"]
@@ -95,7 +95,7 @@ predictParser = do
     return (T.pack str)
   stringParser = try rawStringParser <|> quotedStringParser
   keyValuePairParser = do
-    name <- many1 letter
+    name <- many1 (letter <|> char '.')
     _ <- char ':'
     value <- stringParser
     return KeyValueExpr{name = T.pack name, value = value}
