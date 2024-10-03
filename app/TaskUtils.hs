@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module TaskUtils (
   listTask,
   listFromFilter,
   modTask,
   finishTask,
-  getToday,
   addTask,
+  dateToDay,
+  Date (..),
 )
 where
 
@@ -23,6 +25,8 @@ import Data.Time (
  )
 import System.Process (rawSystem)
 import Taskwarrior.Task (Task (..))
+
+data Date = AbsoluteDate Day | RelativeDate Int
 
 listTask :: [Task] -> IO ()
 listTask tasks = do
@@ -54,7 +58,16 @@ addTask filters = do
   _ <- rawSystem "task" (["add"] <> map T.unpack filters)
   return ()
 
-getToday :: IO Day
-getToday = do
-  tz <- getCurrentTimeZone
-  getCurrentTime <&> ((.localDay)) . utcToLocalTime tz
+dateToDay :: Date -> IO Day
+dateToDay date = do
+  case date of
+    AbsoluteDate day -> return day
+    RelativeDate offset -> do
+      tz <- getCurrentTimeZone
+      today <- getCurrentTime <&> ((.localDay)) . utcToLocalTime tz
+      let
+        addTo :: Day -> Int -> Day
+        addTo day n | n > 0 = addTo (succ day) (n - 1)
+        addTo day n | n < 0 = addTo (pred day) (n + 1)
+        addTo day _ = day
+      return $ addTo today offset

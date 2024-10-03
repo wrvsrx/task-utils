@@ -13,7 +13,6 @@ import Data.Aeson qualified as A
 import Data.ByteString.Lazy qualified as BL
 import Data.ByteString.Lazy.UTF8 qualified as BLU
 import Data.Function ((&))
-import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Time (defaultTimeLocale, formatTime)
@@ -29,8 +28,8 @@ import Task (
  )
 import TaskUtils (
   addTask,
+  dateToDay,
   finishTask,
-  getToday,
   listFromFilter,
   listTask,
   modTask,
@@ -74,13 +73,17 @@ main = do
     Mod (ModOption filter' modifiers) -> modTask (getFilters (Just filter')) modifiers
     ListTask filter' -> listFromFilter (getFilters filter')
     PendingTask filter' -> listFromFilter (getFilters filter' <> ["status:pending"])
-    ListEvent maybeDay -> do
-      today <- getToday
-      _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" (fromMaybe today maybeDay)]
+    ListEvent date -> do
+      day <- dateToDay date
+      _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" day]
       return ()
     FinishTask filter' -> finishTask (getFilters filter')
     AddTask taskInfos -> addTask taskInfos
-    DateTag day -> modTask ["entry:" <> T.pack (show day), "status:pending"] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
-    Date maybeDay -> listFromFilter ["entry:" <> maybe "today" (T.pack . show) maybeDay]
+    DateTag date -> do
+      day <- dateToDay date
+      modTask ["entry:" <> T.pack (show day), "status:pending"] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
+    Date date -> do
+      day <- dateToDay date
+      listFromFilter ["entry:" <> T.pack (show day)]
  where
   getFilters = maybe [] (either (error . show) Prelude.id . parseFilter)

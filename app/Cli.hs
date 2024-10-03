@@ -11,8 +11,9 @@ module Cli (
 ) where
 
 import Data.Text qualified as T
-import Data.Time (Day (..), defaultTimeLocale, parseTimeM)
+import Data.Time (defaultTimeLocale, parseTimeM)
 import Options.Applicative
+import TaskUtils (Date (..))
 
 data VisOption = VisOption
   { highlights :: [T.Text]
@@ -27,19 +28,39 @@ data EventOption = EventOption
   , task :: Maybe T.Text
   }
 
+dateParser :: Parser Date
+dateParser = argument dayReader (metavar "DATE" <> value (RelativeDate 0))
+ where
+  parseRelativeDate :: String -> Maybe Date
+  parseRelativeDate arg = do
+    case arg of
+      "today" -> Just $ RelativeDate 0
+      "tomorrow" -> Just $ RelativeDate 1
+      "yesterday" -> Just $ RelativeDate (-1)
+      _ -> Nothing
+  parseAbsoluteDate :: String -> Maybe Date
+  parseAbsoluteDate arg = do
+    case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
+      Just x -> Just $ AbsoluteDate x
+      Nothing -> Nothing
+  dayReader = eitherReader $ \arg ->
+    case parseRelativeDate arg <|> parseAbsoluteDate arg of
+      Just x -> Right x
+      Nothing -> Left "Failed to parse date. The supported formats are `today`, `tomorrow`, `yesterday`, YYYYMMDD or YYYY-MM-DD."
+
 data TotalOption
   = Closure (Maybe T.Text)
   | Vis VisOption
   | Event EventOption
-  | ListEvent (Maybe Day)
+  | ListEvent Date
   | Mod ModOption
   | ListTask (Maybe T.Text)
   | PendingTask (Maybe T.Text)
   | FinishTask (Maybe T.Text)
   | AddTask [T.Text]
   | -- shortcuts
-    Date (Maybe Day)
-  | DateTag Day
+    Date Date
+  | DateTag Date
 
 data ModOption = ModOption
   { filter :: T.Text
@@ -76,14 +97,6 @@ eventParser =
     <*> argument str (metavar "END")
     <*> optional (argument str (metavar "TASK"))
 
-dateParser :: Parser Day
-dateParser = argument reader (metavar "DATE")
- where
-  reader = eitherReader $ \arg ->
-    case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
-      Just x -> Right x
-      Nothing -> Left "Failed to parse date. The supported formats are YYYYMMDD or YYYY-MM-DD."
-
 filterParser :: Parser (Maybe T.Text)
 filterParser = optional (argument str (metavar "FILTER"))
 
@@ -94,11 +107,11 @@ totalParser =
         <> command "closure" (info (Closure <$> filterParser) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
-        <> command "list-event" (info (ListEvent <$> optional dateParser) idm)
+        <> command "list-event" (info (ListEvent <$> dateParser) idm)
         <> command "list-task" (info (ListTask <$> filterParser) idm)
         <> command "pending-task" (info (PendingTask <$> filterParser) idm)
         <> command "finish-task" (info (FinishTask <$> filterParser) idm)
         <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
-        <> command "date" (info (Date <$> optional dateParser) idm)
+        <> command "date" (info (Date <$> dateParser) idm)
     )
