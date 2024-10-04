@@ -25,6 +25,7 @@ import Data.Time (
   getCurrentTimeZone,
   utcToLocalTime,
  )
+import System.Console.Terminal.Size qualified as TS
 import System.Process (rawSystem)
 import Taskwarrior.IO (getTasks)
 import Taskwarrior.Status (
@@ -91,9 +92,13 @@ listTask tasks = do
   if null tasks
     then putStrLn "No tasks found"
     else do
+      s <- TS.size
       let
+        width = do
+          (TS.Window w _) <- s
+          return w
         doc = formatTasks tasks
-        t = L.renderANSI (Just 80) doc
+        t = L.renderANSI width doc
       TZIO.putStr t
 
 listFromFilter :: [T.Text] -> IO ()

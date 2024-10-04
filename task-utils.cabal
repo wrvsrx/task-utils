@@ -91,6 +91,7 @@ executable task-utils
     , pretty-simple
     , process
     , taskwarrior
+    , terminal-size
     , text
     , time
     , unicode-show
