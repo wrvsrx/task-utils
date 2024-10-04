@@ -92,7 +92,7 @@ columnPicker = \case
 formatTasks :: [Task] -> L.Doc T.Text
 formatTasks tasks =
   let
-    cols = [IdOrUUID, Description, Status, Tags, Urg]
+    cols = [IdOrUUID, Description, Tags, Status, Urg]
     docHeader =
       L.hcat
         ( intersperse
