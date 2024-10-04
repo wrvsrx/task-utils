@@ -16,6 +16,8 @@ where
 
 import Data.Functor ((<&>))
 import Data.List (intersperse, sortBy)
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.Semigroup (Semigroup (..))
 import Data.Set qualified as S
 import Data.Text qualified as T
 import Data.Text.Lazy.IO qualified as TZIO
@@ -133,7 +135,24 @@ listTask tasks = do
         width = do
           (TS.Window w _) <- s
           return w
-        ts = sortBy (flip (\l r -> compare l.urgency r.urgency)) tasks
+        ts =
+          sortBy
+            ( flip
+                ( \l r ->
+                    sconcat (c l.status r.status :| [compare l.urgency r.urgency])
+                )
+            )
+            tasks
+         where
+          c :: Status -> Status -> Ordering
+          c Pending Pending = EQ
+          c Pending _ = LT
+          c (Recurring _ _) (Recurring _ _) = EQ
+          c (Recurring _ _) _ = LT
+          c (Completed _) (Completed _) = EQ
+          c (Completed _) _ = LT
+          c (Deleted _) (Deleted _) = EQ
+          c (Deleted _) _ = LT
         doc = formatTasks ts
         t = L.renderANSI width doc
       TZIO.putStr t
