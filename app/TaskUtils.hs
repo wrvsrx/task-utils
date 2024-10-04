@@ -138,22 +138,25 @@ listTask tasks = do
           return w
         ts =
           sortBy
-            ( flip
-                ( \l r ->
-                    sconcat (c l.status r.status :| [compare l.urgency r.urgency])
-                )
+            ( \l r ->
+                sconcat (c l.status r.status :| [compare r.urgency l.urgency])
             )
             tasks
          where
           c :: Status -> Status -> Ordering
           c Pending Pending = EQ
           c Pending _ = LT
+          c (Recurring _ _) Pending = GT
           c (Recurring _ _) (Recurring _ _) = EQ
           c (Recurring _ _) _ = LT
+          c (Completed _) Pending = GT
+          c (Completed _) (Recurring _ _) = GT
           c (Completed _) (Completed _) = EQ
           c (Completed _) _ = LT
+          c (Deleted _) Pending = GT
+          c (Deleted _) (Recurring _ _) = GT
+          c (Deleted _) (Completed _) = GT
           c (Deleted _) (Deleted _) = EQ
-          c (Deleted _) _ = LT
         doc = formatTasks ts
         t = L.renderANSI width doc
       TZIO.putStr t
@@ -175,7 +178,7 @@ finishTask filters = do
 
 deleteTask :: [T.Text] -> IO ()
 deleteTask filters = do
-  _ <- rawSystem "task" (["delete"] <> map T.unpack filters)
+  _ <- rawSystem "task" (map T.unpack filters <> ["delete"])
   return ()
 
 addTask :: [T.Text] -> IO ()
