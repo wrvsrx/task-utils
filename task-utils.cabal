@@ -83,6 +83,7 @@ executable task-utils
     , base
     , bytestring
     , containers
+    , doclayout
     , fgl
     , graphviz
     , optparse-applicative

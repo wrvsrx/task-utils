@@ -16,7 +16,20 @@
         perSystem =
           { pkgs, ... }:
           rec {
-            packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
+            packages.default = pkgs.haskellPackages.callPackage ./default.nix {
+              doclayout = (
+                pkgs.haskell.lib.overrideSrc pkgs.haskellPackages.doclayout {
+                  src = pkgs.fetchFromGitHub {
+                    owner = "jgm";
+                    repo = "doclayout";
+                    rev = "0.5";
+                    hash = "sha256-gTJhoM0WEF+5sbA3bEH+eYAjixNQf1oi2WbcBJpwLZg=";
+                  };
+                  version = "0.5";
+
+                }
+              );
+            };
             devShells.default = pkgs.haskellPackages.shellFor {
               packages = _: [
                 packages.default
