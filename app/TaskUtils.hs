@@ -26,6 +26,7 @@ import Data.Time (
   getCurrentTimeZone,
   utcToLocalTime,
  )
+import Data.UUID qualified as UUID
 import System.Console.Terminal.Size qualified as TS
 import System.Process (rawSystem)
 import Taskwarrior.IO (getTasks)
@@ -40,7 +41,7 @@ import Text.DocLayout qualified as L
 data Date = AbsoluteDate Day | RelativeDate Int
 
 data TaskColumn
-  = Id
+  = IdOrUUID
   | Status
   | Description
   | Tags
@@ -49,7 +50,7 @@ data TaskColumn
 
 columnWidth :: TaskColumn -> Int
 columnWidth = \case
-  Id -> 5
+  IdOrUUID -> 8
   Description -> 30
   Status -> 11
   Tags -> 20
@@ -57,7 +58,13 @@ columnWidth = \case
 
 columnPicker :: TaskColumn -> Task -> L.Doc T.Text
 columnPicker = \case
-  Id -> L.literal . T.pack . (\case Just x -> show x; Nothing -> "_") . (.id)
+  IdOrUUID ->
+    L.literal
+      . T.pack
+      . ( \t -> case t.id of
+            Just i -> show i
+            Nothing -> take 8 $ UUID.toString t.uuid
+        )
   Description -> L.literal . description
   Status ->
     L.literal
@@ -83,7 +90,7 @@ columnPicker = \case
 formatTasks :: [Task] -> L.Doc T.Text
 formatTasks tasks =
   let
-    cols = [Id, Description, Status, Tags, Urg]
+    cols = [IdOrUUID, Description, Status, Tags, Urg]
     docHeader =
       L.hcat
         ( intersperse
