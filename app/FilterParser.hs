@@ -86,7 +86,7 @@ predictParser = do
  where
   rawStringParser = do
     c <- escapedLetterParser
-    str <- manyTill escapedLetterParser (void (oneOf specialCharacter) <|> eof)
+    str <- manyTill escapedLetterParser (void (lookAhead (oneOf specialCharacter)) <|> eof)
     return (T.pack (c : str))
   quotedStringParser = do
     _ <- char '"'

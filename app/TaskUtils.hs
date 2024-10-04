@@ -9,6 +9,7 @@ module TaskUtils (
   modTask,
   finishTask,
   addTask,
+  deleteTask,
   dateToDay,
   Date (..),
 )
@@ -170,6 +171,11 @@ modTask filters modfiers = do
 finishTask :: [T.Text] -> IO ()
 finishTask filters = do
   _ <- rawSystem "task" (map T.unpack filters <> ["done"])
+  return ()
+
+deleteTask :: [T.Text] -> IO ()
+deleteTask filters = do
+  _ <- rawSystem "task" (["delete"] <> map T.unpack filters)
   return ()
 
 addTask :: [T.Text] -> IO ()

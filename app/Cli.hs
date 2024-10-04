@@ -58,6 +58,7 @@ data TotalOption
   | PendingTask (Maybe T.Text)
   | FinishTask (Maybe T.Text)
   | AddTask [T.Text]
+  | DeleteTask T.Text
   | -- shortcuts
     Date Date
   | DateTag Date
@@ -81,7 +82,7 @@ visParser =
           <> help "Tags to be highlighted."
       )
     <*> flag False True (long "deleted" <> short 'd' <> help "Show deleted tasks.")
-    <*> filterParser
+    <*> maybeFilterParser
 
 modParser :: Parser ModOption
 modParser =
@@ -97,21 +98,25 @@ eventParser =
     <*> argument str (metavar "END")
     <*> optional (argument str (metavar "TASK"))
 
-filterParser :: Parser (Maybe T.Text)
-filterParser = optional (argument str (metavar "FILTER"))
+filterParser :: Parser T.Text
+filterParser = argument str (metavar "FILTER")
+
+maybeFilterParser :: Parser (Maybe T.Text)
+maybeFilterParser = optional filterParser
 
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
     ( command "visualize" (info (Vis <$> visParser) idm)
-        <> command "closure" (info (Closure <$> filterParser) idm)
+        <> command "closure" (info (Closure <$> maybeFilterParser) idm)
         <> command "mod" (info (Mod <$> modParser) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
         <> command "list-event" (info (ListEvent <$> dateParser) idm)
-        <> command "list-task" (info (ListTask <$> filterParser) idm)
-        <> command "pending-task" (info (PendingTask <$> filterParser) idm)
-        <> command "finish-task" (info (FinishTask <$> filterParser) idm)
+        <> command "list-task" (info (ListTask <$> maybeFilterParser) idm)
+        <> command "pending-task" (info (PendingTask <$> maybeFilterParser) idm)
+        <> command "finish-task" (info (FinishTask <$> maybeFilterParser) idm)
         <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
+        <> command "delete-task" (info (DeleteTask <$> filterParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> dateParser) idm)
     )

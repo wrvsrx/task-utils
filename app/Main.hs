@@ -29,6 +29,7 @@ import Task (
 import TaskUtils (
   addTask,
   dateToDay,
+  deleteTask,
   finishTask,
   listFromFilter,
   listTask,
@@ -79,6 +80,7 @@ main = do
       return ()
     FinishTask filter' -> finishTask (getFilters filter')
     AddTask taskInfos -> addTask taskInfos
+    DeleteTask filter' -> deleteTask (getFilters (Just filter'))
     DateTag date -> do
       day <- dateToDay date
       modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
