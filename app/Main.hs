@@ -81,7 +81,7 @@ main = do
     AddTask taskInfos -> addTask taskInfos
     DateTag date -> do
       day <- dateToDay date
-      modTask ["entry:" <> T.pack (show day), "status:pending"] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
+      modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
     Date date -> do
       day <- dateToDay date
       listFromFilter ["entry:" <> T.pack (show day)]
