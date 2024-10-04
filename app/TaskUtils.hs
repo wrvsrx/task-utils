@@ -15,7 +15,8 @@ module TaskUtils (
 where
 
 import Data.Functor ((<&>))
-import Data.List (intersperse)
+import Data.List (intersperse, sortBy)
+import Data.Set qualified as S
 import Data.Text qualified as T
 import Data.Text.Lazy.IO qualified as TZIO
 import Data.Time (
@@ -38,20 +39,29 @@ import Text.DocLayout qualified as L
 
 data Date = AbsoluteDate Day | RelativeDate Int
 
-data TaskColumn = Id | Status | Description deriving (Show)
+data TaskColumn
+  = Id
+  | Status
+  | Description
+  | Tags
+  | Urg
+  deriving (Show)
 
 columnWidth :: TaskColumn -> Int
 columnWidth = \case
   Id -> 5
   Description -> 30
   Status -> 11
+  Tags -> 20
+  Urg -> 7
 
-columnPicker :: TaskColumn -> Task -> T.Text
+columnPicker :: TaskColumn -> Task -> L.Doc T.Text
 columnPicker = \case
-  Id -> T.pack . (\case Just x -> show x; Nothing -> "_") . (.id)
-  Description -> description
+  Id -> L.literal . T.pack . (\case Just x -> show x; Nothing -> "_") . (.id)
+  Description -> L.literal . description
   Status ->
-    T.pack
+    L.literal
+      . T.pack
       . ( \case
             Pending -> "Pending"
             Completed _ -> "Completed"
@@ -59,11 +69,21 @@ columnPicker = \case
             Recurring _ _ -> "Recurring"
         )
       . (.status)
+  Tags ->
+    L.hsep
+      . map (L.nowrap . L.literal)
+      . S.toList
+      . (.tags)
+  Urg ->
+    L.literal
+      . T.pack
+      . show
+      . (.urgency)
 
 formatTasks :: [Task] -> L.Doc T.Text
 formatTasks tasks =
   let
-    cols = [Id, Description, Status]
+    cols = [Id, Description, Status, Tags, Urg]
     docHeader =
       L.hcat
         ( intersperse
@@ -85,7 +105,16 @@ formatTasks tasks =
 
 formatTaskLine :: [TaskColumn] -> Task -> L.Doc T.Text
 formatTaskLine cols task =
-  L.hcat (intersperse (L.vfill " " :: L.Doc T.Text) (map (\col -> L.lblock (columnWidth col) (L.literal $ columnPicker col task)) cols))
+  L.hcat
+    ( intersperse
+        (L.vfill " " :: L.Doc T.Text)
+        ( map
+            ( \col ->
+                L.lblock (columnWidth col) (columnPicker col task)
+            )
+            cols
+        )
+    )
 
 listTask :: [Task] -> IO ()
 listTask tasks = do
@@ -97,7 +126,8 @@ listTask tasks = do
         width = do
           (TS.Window w _) <- s
           return w
-        doc = formatTasks tasks
+        ts = sortBy (flip (\l r -> compare l.urgency r.urgency)) tasks
+        doc = formatTasks ts
         t = L.renderANSI width doc
       TZIO.putStr t
 
