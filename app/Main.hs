@@ -78,7 +78,7 @@ main = do
       day <- dateToDay date
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" day]
       return ()
-    FinishTask filter' -> finishTask (getFilters filter')
+    FinishTask filter' -> finishTask (getFilters filter' <> ["status:pending"])
     AddTask taskInfos -> addTask taskInfos
     DeleteTask filter' -> deleteTask (getFilters (Just filter'))
     DateTag date -> do
