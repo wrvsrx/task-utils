@@ -15,6 +15,7 @@ data Predict
       { name :: T.Text
       , value :: T.Text
       }
+  | RawIdExpr Int
   | StringExpr T.Text
   deriving (Show)
 
@@ -39,10 +40,10 @@ parseFilter s =
 
 renderFilter :: FilterExpr -> [T.Text]
 renderFilter (PredictExpr (KeyValueExpr name value)) = [name <> ":" <> value]
+renderFilter (PredictExpr (RawIdExpr id')) = ["id:" <> T.pack (show id')]
 renderFilter (PredictExpr (StringExpr str)) =
   case () of
     _ | T.length str > 0 && T.head str `elem` ['+', '-'] -> [str]
-    _ | all (`elem` ['0' .. '9']) (T.unpack str) -> ["id:" <> str]
     _ -> ["description.contains:" <> str]
 renderFilter (AndExpr left right) = ["("] <> renderFilter left <> [")", "and", "("] <> renderFilter right <> [")"]
 renderFilter (OrExpr left right) = ["("] <> renderFilter left <> [")", "or", "("] <> renderFilter right <> [")"]
@@ -82,7 +83,7 @@ escapedLetterParser = do
 -- key value pair
 predictParser :: Parsec T.Text () Predict
 predictParser = do
-  try keyValuePairParser <|> (StringExpr <$> stringParser)
+  try keyValuePairParser <|> try (RawIdExpr . read <$> many1 digit) <|> (StringExpr <$> stringParser)
  where
   rawStringParser = do
     c <- escapedLetterParser
