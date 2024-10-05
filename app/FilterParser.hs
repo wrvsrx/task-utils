@@ -83,7 +83,13 @@ escapedLetterParser = do
 -- key value pair
 predictParser :: Parsec T.Text () Predict
 predictParser = do
-  try keyValuePairParser <|> try (RawIdExpr . read <$> many1 digit) <|> (StringExpr <$> stringParser)
+  try keyValuePairParser
+    <|> ( do
+            s <- stringParser
+            return $ case s of
+              _ | all (`elem` ['0' .. '9']) (T.unpack s) -> RawIdExpr (read (T.unpack s))
+              _ -> StringExpr s
+        )
  where
   rawStringParser = do
     c <- escapedLetterParser
