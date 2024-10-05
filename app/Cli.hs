@@ -109,7 +109,7 @@ totalParser =
   hsubparser
     ( command "visualize" (info (Vis <$> visParser) idm)
         <> command "closure" (info (Closure <$> maybeFilterParser) idm)
-        <> command "mod" (info (Mod <$> modParser) idm)
+        <> command "modify-task" (info (Mod <$> modParser) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
         <> command "list-event" (info (ListEvent <$> dateParser) idm)
         <> command "list-task" (info (ListTask <$> maybeFilterParser) idm)
