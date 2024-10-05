@@ -64,7 +64,7 @@ expr = do
     ]
 
 specialCharacter :: [Char]
-specialCharacter = [' ', '&', '|', '(', ')', '!', ':']
+specialCharacter = [' ', '&', '|', '(', ')', '!', ':', '"']
 
 escapedLetterParser :: Parsec T.Text () Char
 escapedLetterParser = do
