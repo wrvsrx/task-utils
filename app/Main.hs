@@ -27,6 +27,7 @@ import Task (
   tasksToDotImpure,
  )
 import TaskUtils (
+  TaskColumn (..),
   addTask,
   dateToDay,
   deleteTask,
@@ -54,7 +55,7 @@ main = do
     Closure filter' -> do
       tasks <- getTasks (getFilters filter')
       taskClosure <- getClosureImpure tasks
-      listTask taskClosure
+      listTask [IdOrUUID, Description, Tags, Status, Urg] taskClosure
     Event (EventOption summary start' end task) -> do
       task' <- do
         case task of
@@ -73,7 +74,11 @@ main = do
       return ()
     Mod (ModOption filter' modifiers) -> modTask (getFilters (Just filter')) modifiers
     ListTask filter' -> listFromFilter (getFilters filter')
-    PendingTask filter' -> listFromFilter (getFilters filter' <> ["status:pending"])
+    PendingTask filter' -> do
+      let
+        filters = getFilters filter' <> ["status:pending"]
+      tasks <- getTasks filters
+      listTask [IdOrUUID, Description, Tags, Urg] tasks
     ListEvent date -> do
       day <- dateToDay date
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" day]

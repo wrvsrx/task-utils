@@ -1,10 +1,10 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module TaskUtils (
   listTask,
+  TaskColumn (..),
   listFromFilter,
   modTask,
   finishTask,
@@ -25,7 +25,7 @@ import Data.Time (
   utcToLocalTime,
  )
 import System.Process (rawSystem)
-import TaskUtils.Renderer.Terminal (listTask)
+import TaskUtils.Renderer.Terminal (TaskColumn (..), listTask)
 import Taskwarrior.IO (getTasks)
 
 data Date = AbsoluteDate Day | RelativeDate Int
@@ -33,7 +33,7 @@ data Date = AbsoluteDate Day | RelativeDate Int
 listFromFilter :: [T.Text] -> IO ()
 listFromFilter filters = do
   tasks <- getTasks filters
-  listTask tasks
+  listTask [IdOrUUID, Description, Tags, Status, Urg] tasks
 
 modTask :: [T.Text] -> [T.Text] -> IO ()
 modTask filters modfiers = do
