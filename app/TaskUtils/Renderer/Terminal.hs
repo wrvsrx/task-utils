@@ -50,13 +50,16 @@ padFloat intPartLen floatPartLen f =
         ( L.literal $ T.pack (if length floatStr > floatPartLen + 1 then take (floatPartLen + 1) floatStr else floatStr)
         )
 
+maximumNonExcept :: (Integral a) => [a] -> a
+maximumNonExcept xs = maximum (1 : xs)
+
 computeRenderer :: [Task] -> TaskColumn -> TaskColumnRenderer
 computeRenderer tasks col =
   case col of
     IdOrUUID ->
       let
         lackId = any (\t -> isNothing t.id) tasks
-        width = if lackId then 8 else length (show (maximum (map (fromMaybe 0 . (.id)) tasks)))
+        width = if lackId then 8 else length (show (maximumNonExcept (map (fromMaybe 0 . (.id)) tasks)))
         label = if lackId then "ID/UUID" else "ID"
         idOrUUIDPicker (t :: Task) =
           L.literal $
@@ -68,7 +71,7 @@ computeRenderer tasks col =
         TaskColumnRenderer{label = label, picker = idOrUUIDPicker, width = width}
     Description ->
       let
-        width = min 30 (maximum $ map (L.realLength . description) tasks)
+        width = min 30 (maximumNonExcept $ map (L.realLength . description) tasks)
        in
         TaskColumnRenderer
           { label = "Desc"
@@ -83,7 +86,7 @@ computeRenderer tasks col =
         }
     Tags ->
       let
-        width = min 20 (2 * maximum (map (maximum . map T.length . S.toList . (\t -> t.tags)) tasks))
+        width = min 20 (2 * maximumNonExcept (map (maximumNonExcept . map T.length . S.toList . (\t -> t.tags)) tasks))
        in
         TaskColumnRenderer
           { label = "Tags"
