@@ -12,6 +12,7 @@ module TaskUtils (
   deleteTask,
   dateToDay,
   Date (..),
+  viewTask,
 )
 where
 
@@ -68,3 +69,8 @@ dateToDay date = do
         addTo day n | n < 0 = addTo (pred day) (n + 1)
         addTo day _ = day
       return $ addTo today offset
+
+viewTask :: [T.Text] -> IO ()
+viewTask filters = do
+  _ <- rawSystem "task" (map T.unpack filters <> ["information"])
+  return ()

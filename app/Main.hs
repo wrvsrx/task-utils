@@ -35,6 +35,7 @@ import TaskUtils (
   listFromFilter,
   listTask,
   modTask,
+  viewTask,
  )
 import Taskwarrior.IO (getTasks)
 import Taskwarrior.Task (Task (..))
@@ -84,6 +85,8 @@ main = do
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" day]
       return ()
     FinishTask filter' -> finishTask (getFilters filter' <> ["status:pending"])
+    ViewTask filter' -> do
+      viewTask (getFilters filter')
     AddTask taskInfos -> addTask taskInfos
     DeleteTask filter' -> deleteTask (getFilters (Just filter'))
     DateTag date -> do

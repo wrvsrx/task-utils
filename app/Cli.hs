@@ -57,6 +57,7 @@ data TotalOption
   | ListTask (Maybe T.Text)
   | PendingTask (Maybe T.Text)
   | FinishTask (Maybe T.Text)
+  | ViewTask (Maybe T.Text)
   | AddTask [T.Text]
   | DeleteTask T.Text
   | -- shortcuts
@@ -115,6 +116,7 @@ totalParser =
         <> command "list-task" (info (ListTask <$> maybeFilterParser) idm)
         <> command "pending-task" (info (PendingTask <$> maybeFilterParser) idm)
         <> command "finish-task" (info (FinishTask <$> maybeFilterParser) idm)
+        <> command "view-task" (info (ViewTask <$> maybeFilterParser) idm)
         <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
         <> command "delete-task" (info (DeleteTask <$> filterParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
