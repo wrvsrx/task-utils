@@ -72,7 +72,7 @@ computeRenderer tasks col =
        in
         TaskColumnRenderer
           { label = "Desc"
-          , picker = L.literal . (.description)
+          , picker = L.hsep . map L.literal . T.splitOn " " . (.description)
           , width = width
           }
     Status ->
