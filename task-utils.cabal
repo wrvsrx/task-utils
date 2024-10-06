@@ -71,6 +71,7 @@ executable task-utils
     FilterParser
     Task
     TaskUtils
+    TaskUtils.Renderer.Terminal
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:

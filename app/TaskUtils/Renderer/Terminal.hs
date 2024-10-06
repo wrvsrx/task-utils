@@ -1,0 +1,138 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+module TaskUtils.Renderer.Terminal (
+  formatTasks,
+  listTask,
+) where
+
+import Data.List (intersperse, sortBy)
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.Semigroup (Semigroup (..))
+import Data.Set qualified as S
+import Data.Text qualified as T
+import Data.Text.Lazy.IO qualified as TZIO
+import Data.UUID qualified as UUID
+import System.Console.Terminal.Size qualified as TS
+import Taskwarrior.Status (Status (..))
+import Taskwarrior.Task (Task (..))
+import Text.DocLayout qualified as L
+
+data TaskColumn
+  = IdOrUUID
+  | Status
+  | Description
+  | Tags
+  | Urg
+  deriving (Show)
+
+columnWidth :: TaskColumn -> Int
+columnWidth = \case
+  IdOrUUID -> 8
+  Description -> 30
+  Status -> 11
+  Tags -> 20
+  Urg -> 7
+
+columnPicker :: TaskColumn -> Task -> L.Doc T.Text
+columnPicker = \case
+  IdOrUUID ->
+    L.literal
+      . T.pack
+      . ( \t -> case t.id of
+            Just i -> show i
+            Nothing -> take 8 $ UUID.toString t.uuid
+        )
+  Description -> L.literal . description
+  Status ->
+    L.literal
+      . T.pack
+      . ( \case
+            Pending -> "Pending"
+            Completed _ -> "Completed"
+            Deleted _ -> "Deleted"
+            Recurring _ _ -> "Recurring"
+        )
+      . (.status)
+  Tags ->
+    L.hsep
+      . map (L.nowrap . L.literal)
+      . S.toList
+      . (.tags)
+  Urg ->
+    L.literal
+      . T.pack
+      . show
+      . (.urgency)
+
+formatTasks :: [Task] -> L.Doc T.Text
+formatTasks tasks =
+  let
+    cols = [IdOrUUID, Description, Tags, Status, Urg]
+    docHeader =
+      L.hcat
+        ( intersperse
+            (L.vfill " ")
+            ( map
+                ( \col ->
+                    L.lblock
+                      (columnWidth col)
+                      (L.underlined $ L.bold $ L.literal $ T.pack (show col))
+                )
+                cols
+            )
+        )
+   in
+    docHeader
+      <> L.cr
+      <> L.vcat (map (formatTaskLine cols) tasks)
+      <> L.cr
+
+formatTaskLine :: [TaskColumn] -> Task -> L.Doc T.Text
+formatTaskLine cols task =
+  L.hcat
+    ( intersperse
+        (L.vfill " " :: L.Doc T.Text)
+        ( map
+            ( \col ->
+                L.lblock (columnWidth col) (columnPicker col task)
+            )
+            cols
+        )
+    )
+
+listTask :: [Task] -> IO ()
+listTask tasks = do
+  if null tasks
+    then putStrLn "No tasks found"
+    else do
+      s <- TS.size
+      let
+        width = do
+          (TS.Window w _) <- s
+          return w
+        ts =
+          sortBy
+            ( \l r ->
+                sconcat (c l.status r.status :| [compare r.urgency l.urgency])
+            )
+            tasks
+         where
+          c :: Status -> Status -> Ordering
+          c Pending Pending = EQ
+          c Pending _ = LT
+          c (Recurring _ _) Pending = GT
+          c (Recurring _ _) (Recurring _ _) = EQ
+          c (Recurring _ _) _ = LT
+          c (Completed _) Pending = GT
+          c (Completed _) (Recurring _ _) = GT
+          c (Completed _) (Completed _) = EQ
+          c (Completed _) _ = LT
+          c (Deleted _) Pending = GT
+          c (Deleted _) (Recurring _ _) = GT
+          c (Deleted _) (Completed _) = GT
+          c (Deleted _) (Deleted _) = EQ
+        doc = formatTasks ts
+        t = L.renderANSI width doc
+      TZIO.putStr t
