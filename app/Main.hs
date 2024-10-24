@@ -17,6 +17,7 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (getCurrentTimeZone)
+import Debug.Trace (trace)
 import FilterParser (parseFilter)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
@@ -96,4 +97,11 @@ main = do
       day <- dateToDay date
       listFromFilter ["entry:" <> T.pack (show day)]
  where
-  getFilters = maybe [] (either (error . show) Prelude.id . parseFilter)
+  getFilters x =
+    case x of
+      Nothing -> []
+      Just x' ->
+        let
+          parseResult = parseFilter x'
+         in
+          either (error . show) Prelude.id parseResult

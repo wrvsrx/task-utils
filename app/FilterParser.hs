@@ -61,7 +61,16 @@ expr = do
  where
   table =
     [ [Prefix (NotExpr <$ try (spaces *> char '!'))]
-    , [Infix (AndExpr <$ try (spaces *> ((notFollowedBy . lookAhead) (char '&' <|> char '|') <|> void (char '&')))) AssocLeft, Infix (OrExpr <$ try (spaces *> char '|')) AssocLeft]
+    ,
+      [ Infix
+          ( AndExpr
+              <$ ( try (spaces *> (notFollowedBy . try) (oneOf specialCharacter))
+                    <|> try (spaces *> void (char '&'))
+                 )
+          )
+          AssocLeft
+      , Infix (OrExpr <$ try (spaces *> char '|')) AssocLeft
+      ]
     ]
 
 specialCharacter :: [Char]
