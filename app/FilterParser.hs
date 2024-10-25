@@ -64,7 +64,7 @@ expr = do
     ,
       [ Infix
           ( AndExpr
-              <$ ( try (spaces *> (notFollowedBy . try) (oneOf specialCharacter))
+              <$ ( try (spaces *> (notFollowedBy . try) (oneOf [' ', '&', '|', ')']))
                     <|> try (spaces *> void (char '&'))
                  )
           )
