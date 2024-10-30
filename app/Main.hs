@@ -77,14 +77,14 @@ main = do
     ListTask filter' -> listFromFilter (getFilters filter')
     PendingTask filter' -> do
       let
-        filters = getFilters filter' <> ["status:pending"]
+        filters = keepPendingFilters (getFilters filter')
       tasks <- getTasks filters
       listTask [IdOrUUID, Description, Tags, Urg] tasks
     ListEvent date -> do
       day <- dateToDay date
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" day]
       return ()
-    FinishTask filter' -> finishTask (getFilters filter' <> ["status:pending"])
+    FinishTask filter' -> finishTask (keepPendingFilters (getFilters filter'))
     ViewTask filter' -> do
       viewTask (getFilters filter')
     AddTask taskInfos -> addTask taskInfos
@@ -104,3 +104,5 @@ main = do
           parseResult = parseFilter x'
          in
           either (error . show) Prelude.id parseResult
+  keepPendingFilters :: [T.Text] -> [T.Text]
+  keepPendingFilters x = ["("] <> x <> [")", "status:pending"]
