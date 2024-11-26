@@ -20,6 +20,7 @@ import Data.Time (
  )
 import Options.Applicative
 import Task (TaskDate (..))
+import Utils (TimeRange (..))
 
 data VisOption = VisOption
   { highlights :: [T.Text]
@@ -111,11 +112,6 @@ filterParser = argument str (metavar "FILTER")
 
 maybeFilterParser :: Parser (Maybe T.Text)
 maybeFilterParser = optional filterParser
-
-data TimeRange
-  = TimeRangeDay TaskDate
-  | TimeRangeRange LocalTime (Maybe LocalTime)
-  deriving (Show)
 
 data VisualizeEventOption = CliOption
   { calendarDir :: Maybe FilePath

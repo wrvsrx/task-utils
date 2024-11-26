@@ -66,8 +66,7 @@ executable task-utils
   main-is:            Main.hs
 
   -- Modules included in this executable, other than Main.
-  other-modules:
-    Cli
+  other-modules:      Cli
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -87,6 +86,7 @@ executable task-utils
     , parsec
     , pretty-simple
     , process
+    , task-utils:task
     , taskwarrior
     , terminal-size
     , text
@@ -94,7 +94,7 @@ executable task-utils
     , unicode-show
     , utf8-string
     , uuid
-    , task-utils:task
+    , task-utils:utils
 
   -- Directories containing source files.
   hs-source-dirs:     app
@@ -124,11 +124,64 @@ library task
     , unicode-show
     , utf8-string
     , uuid
+    , task-utils:utils
 
   default-language:   Haskell2010
   exposed-modules:    Task
   other-modules:
-    Task.Utils
     Task.FilterParser
     Task.Renderer.Terminal
-    
+    Task.Utils
+
+-- library event
+--   import:             warnings
+--   hs-source-dirs:     lib/event
+--   default-extensions: ImportQualifiedPost
+--   build-depends:
+--     , aeson
+--     , base
+--     , bytestring
+--     , Chart
+--     , Chart-cairo
+--     , containers
+--     , data-default
+--     , deepseq
+--     , directory
+--     , doclayout
+--     , fgl
+--     , filepath
+--     , graphviz
+--     , iCalendar
+--     , optparse-applicative
+--     , parsec
+--     , pretty-simple
+--     , process
+--     , split
+--     , taskwarrior
+--     , terminal-size
+--     , text
+--     , time
+--     , transformers
+--     , unicode-show
+--     , utf8-string
+--     , uuid
+--
+--   default-language:   Haskell2010
+--   exposed-modules:    Event
+--   other-modules:
+--     Event.Classify
+--     Event.Draw
+--     Event.Event
+--     Event.ParseVDirSyncer
+--     Event.Summarize
+
+library utils
+  import:             warnings
+  hs-source-dirs:     lib/utils
+  default-extensions: ImportQualifiedPost
+  build-depends:
+    , base
+    , time
+
+  default-language:   Haskell2010
+  exposed-modules:    Utils

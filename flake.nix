@@ -14,8 +14,12 @@
       {
         systems = [ "x86_64-linux" ];
         perSystem =
-          { pkgs, ... }:
+          { pkgs, system, ... }:
           rec {
+            _module.args.pkgs = import inputs.nixpkgs {
+              inherit system;
+              config.allowBroken = true;
+            };
             packages.default = pkgs.haskellPackages.callPackage ./default.nix {
               doclayout = (
                 pkgs.haskell.lib.overrideSrc pkgs.haskellPackages.doclayout {
