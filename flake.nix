@@ -41,7 +41,7 @@
                 haskell-language-server
               ];
             };
-            formatter = pkgs.nixpkgs-fmt;
+            formatter = pkgs.nixfmt-rfc-style;
           };
       }
     );
