@@ -43,7 +43,6 @@ import Task.Utils (
   TaskColumn (..),
   TaskDate (..),
   addTask,
-  dateToDay,
   deleteTask,
   finishTask,
   listFromFilter,
@@ -55,6 +54,7 @@ import Taskwarrior.IO qualified as Ta
 import Taskwarrior.Status qualified as Ta
 import Taskwarrior.Task (Task)
 import Taskwarrior.Task qualified as Ta
+import Utils (dateToDay)
 
 taskDeserialize :: BL.ByteString -> [Task]
 taskDeserialize = fromJust . (A.decode :: BL.ByteString -> Maybe [Task])

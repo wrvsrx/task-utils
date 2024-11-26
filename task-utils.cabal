@@ -75,6 +75,8 @@ executable task-utils
 
   -- Other library packages from which modules are imported.
   build-depends:
+    , directory
+    , task-utils:event
     , aeson
     , base
     , bytestring
@@ -133,47 +135,48 @@ library task
     Task.Renderer.Terminal
     Task.Utils
 
--- library event
---   import:             warnings
---   hs-source-dirs:     lib/event
---   default-extensions: ImportQualifiedPost
---   build-depends:
---     , aeson
---     , base
---     , bytestring
---     , Chart
---     , Chart-cairo
---     , containers
---     , data-default
---     , deepseq
---     , directory
---     , doclayout
---     , fgl
---     , filepath
---     , graphviz
---     , iCalendar
---     , optparse-applicative
---     , parsec
---     , pretty-simple
---     , process
---     , split
---     , taskwarrior
---     , terminal-size
---     , text
---     , time
---     , transformers
---     , unicode-show
---     , utf8-string
---     , uuid
---
---   default-language:   Haskell2010
---   exposed-modules:    Event
---   other-modules:
---     Event.Classify
---     Event.Draw
---     Event.Event
---     Event.ParseVDirSyncer
---     Event.Summarize
+library event
+  import:             warnings
+  hs-source-dirs:     lib/event
+  default-extensions: ImportQualifiedPost
+  build-depends:
+    , aeson
+    , base
+    , bytestring
+    , Chart
+    , Chart-cairo
+    , containers
+    , data-default
+    , deepseq
+    , directory
+    , doclayout
+    , fgl
+    , filepath
+    , graphviz
+    , iCalendar
+    , optparse-applicative
+    , parsec
+    , pretty-simple
+    , process
+    , split
+    , taskwarrior
+    , terminal-size
+    , text
+    , time
+    , transformers
+    , unicode-show
+    , utf8-string
+    , uuid
+    , task-utils:utils
+
+  default-language:   Haskell2010
+  exposed-modules:    Event
+  other-modules:
+    Event.Classify
+    Event.Draw
+    Event.Event
+    Event.ParseVDirSyncer
+    Event.Summarize
 
 library utils
   import:             warnings

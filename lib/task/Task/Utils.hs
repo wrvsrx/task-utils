@@ -10,21 +10,12 @@ module Task.Utils (
   finishTask,
   addTask,
   deleteTask,
-  dateToDay,
   TaskDate (..),
   viewTask,
 )
 where
 
-import Data.Functor ((<&>))
 import Data.Text qualified as T
-import Data.Time (
-  Day (..),
-  LocalTime (..),
-  getCurrentTime,
-  getCurrentTimeZone,
-  utcToLocalTime,
- )
 import System.Process (rawSystem)
 import Task.Renderer.Terminal (TaskColumn (..), listTask)
 import Taskwarrior.IO (getTasks)
@@ -54,20 +45,6 @@ addTask :: [T.Text] -> IO ()
 addTask filters = do
   _ <- rawSystem "task" (["add"] <> map T.unpack filters)
   return ()
-
-dateToDay :: TaskDate -> IO Day
-dateToDay date = do
-  case date of
-    AbsoluteDate day -> return day
-    RelativeDate offset -> do
-      tz <- getCurrentTimeZone
-      today <- getCurrentTime <&> ((.localDay)) . utcToLocalTime tz
-      let
-        addTo :: Day -> Int -> Day
-        addTo day n | n > 0 = addTo (succ day) (n - 1)
-        addTo day n | n < 0 = addTo (pred day) (n + 1)
-        addTo day _ = day
-      return $ addTo today offset
 
 viewTask :: [T.Text] -> IO ()
 viewTask filters = do

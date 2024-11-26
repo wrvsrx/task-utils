@@ -15,8 +15,12 @@ import Data.ByteString.Lazy.UTF8 qualified as BLU
 import Data.Function ((&))
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Data.Time (defaultTimeLocale, formatTime)
+import Data.Time (
+  defaultTimeLocale,
+  formatTime,
+ )
 import Data.Time.LocalTime (getCurrentTimeZone)
+import Event (visualizeEvent)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
 import Task (
@@ -94,7 +98,8 @@ main = do
       day <- dateToDay date
       listFromFilter ["entry:" <> T.pack (show day)]
     VisualizeEvent opt -> do
-      print opt
+      opt' <- parseVisualizeEventCliOption opt
+      visualizeEvent opt'
  where
   getFilters x =
     case x of

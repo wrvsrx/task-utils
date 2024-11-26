@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoFieldSelectors #-}
@@ -10,16 +11,31 @@ module Cli (
   EventOption (..),
   ModOption (..),
   totalParser,
+  parseVisualizeEventCliOption,
 ) where
 
+import Data.Aeson qualified as A
+import Data.Function ((&))
+import Data.Functor ((<&>))
+import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Time (
+  Day (..),
   LocalTime (..),
+  TimeOfDay (..),
   defaultTimeLocale,
+  getCurrentTime,
+  getCurrentTimeZone,
   parseTimeM,
+  utcToLocalTime,
+ )
+import Event (
+  CalendarSummaryOption (..),
+  ConfigFromFile (..),
  )
 import Options.Applicative
-import Task (TaskDate (..))
+import System.Directory (XdgDirectory (..), getXdgDirectory)
+import Task (TaskDate (..), dateToDay)
 import Utils (TimeRange (..))
 
 data VisOption = VisOption
@@ -172,6 +188,48 @@ calendarVisualizationParser = do
         <|> TimeRangeRange
       <$> startTimeParser
       <*> optional endTimeParser
+
+parseVisualizeEventCliOption :: VisualizeEventOption -> IO CalendarSummaryOption
+parseVisualizeEventCliOption cliOption = do
+  defaultCacheFile <- getXdgDirectory XdgCache "task-utils/cache.json"
+  defaultConfigFile <- getXdgDirectory XdgConfig "task-utils/config.json"
+  timeZone <- getCurrentTimeZone
+  time <- getCurrentTime
+  let
+    currentDay :: Day = utcToLocalTime timeZone time & localDay
+  let
+    configFile = fromMaybe defaultConfigFile cliOption.configPath
+  config :: ConfigFromFile <- A.eitherDecodeFileStrict configFile <&> either error id
+  let
+    calendarDir = case cliOption.calendarDir of
+      Just x -> x
+      Nothing -> case config.calendarDir of
+        Just x -> x
+        Nothing -> error "calendarDir is not specified either in command line or in config file"
+  timeRange <- do
+    case cliOption.timeRange of
+      Just (TimeRangeDay day) -> do
+        day' <- dateToDay day
+        return
+          ( LocalTime{localDay = day', localTimeOfDay = TimeOfDay 0 0 0}
+          , LocalTime{localDay = succ day', localTimeOfDay = TimeOfDay 0 0 0}
+          )
+      Just (TimeRangeRange startTime maybeEndTime) -> case maybeEndTime of
+        Just endTime -> return (startTime, endTime)
+        Nothing -> return (startTime, LocalTime{localDay = succ (localDay startTime), localTimeOfDay = TimeOfDay 0 0 0})
+      Nothing ->
+        return
+          ( LocalTime{localDay = currentDay, localTimeOfDay = TimeOfDay 0 0 0}
+          , LocalTime{localDay = succ currentDay, localTimeOfDay = TimeOfDay 0 0 0}
+          )
+  return
+    CalendarSummaryOption
+      { calendarDir = calendarDir
+      , timeRange = timeRange
+      , outputPng = cliOption.outputPng
+      , cacheJSONPath = fromMaybe defaultCacheFile $ cliOption.cacheJSONPath <|> config.cacheJSONPath
+      , classifyConfig = config.classifyConfig
+      }
 
 totalParser :: Parser TotalOption
 totalParser =
