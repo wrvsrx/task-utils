@@ -11,7 +11,6 @@ module Event (
   ConfigFromFile (..),
 ) where
 
-import Control.Monad (unless)
 import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Writer (WriterT, runWriterT, tell)
@@ -32,7 +31,7 @@ import Event.ParseVDirSyncer (
   filterAccordingToTime,
   parseEventsUsingCache,
  )
-import Event.Summarize (accountEvent, checkEvent)
+import Event.Summarize (CheckError (..), accountEvent, checkEvent)
 import GHC.Generics (Generic)
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (takeDirectory)
@@ -73,7 +72,9 @@ mainFunc timeZone options = do
     statistics = accountEvent (map (second (fromMaybe (EventType "unknown"))) classfiedEvent)
     eventsWithTimeCost = M.toList statistics
   lift $ tell ["unknownEvents: " <> ushow unknownEvents]
-  unless (null checkEventRes) $ lift $ tell [ushow checkEventRes]
+  case checkEventRes of
+    Just (NotEndToEnd res) -> lift $ tell ["NotEndToEnd: \n" <> unlines (map (\x -> "\t" <> ushow x) res)]
+    Nothing -> pure ()
   let
     totalTime = foldl (\a (_, b) -> a + b) 0.0 eventsWithTimeCost
   lift $ tell ["totalTime: " <> show totalTime]

@@ -24,20 +24,22 @@ data ZonedEvent = ZonedEvent
 eventToZonedEvent :: TimeZone -> Event -> ZonedEvent
 eventToZonedEvent tz (Event su s e) = ZonedEvent su (utcToZonedTime tz s) (utcToZonedTime tz e)
 
-data CheckError = NotEndToEnd (ZonedEvent, ZonedEvent) | EmptyEvent
-  deriving
-    (Show)
+data CheckError = NotEndToEnd [(ZonedEvent, ZonedEvent)] deriving (Show)
 
-checkEndToEnd :: TimeZone -> [Event] -> Maybe CheckError
-checkEndToEnd _ [] = Just EmptyEvent
-checkEndToEnd _ [_] = Nothing
+checkEndToEnd :: TimeZone -> [Event] -> [(ZonedEvent, ZonedEvent)]
+checkEndToEnd _ [] = []
+checkEndToEnd _ [_] = []
 checkEndToEnd timeZone (x : y : xs) =
   if x.endTime /= y.startTime
-    then Just (NotEndToEnd (eventToZonedEvent timeZone x, eventToZonedEvent timeZone y))
+    then (eventToZonedEvent timeZone x, eventToZonedEvent timeZone y) : checkEndToEnd timeZone (y : xs)
     else checkEndToEnd timeZone (y : xs)
 
 checkEvent :: TimeZone -> [Event] -> Maybe CheckError
-checkEvent tz evs = checkEndToEnd tz (sort evs)
+checkEvent tz evs =
+  let
+    res = checkEndToEnd tz (sort evs)
+   in
+    if null res then Nothing else Just (NotEndToEnd res)
 
 accountEvent :: [(Event, EventType)] -> M.Map EventType Double
 accountEvent =
