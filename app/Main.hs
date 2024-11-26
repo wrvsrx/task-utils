@@ -93,6 +93,8 @@ main = do
     Date date -> do
       day <- dateToDay date
       listFromFilter ["entry:" <> T.pack (show day)]
+    VisualizeEvent opt -> do
+      print opt
  where
   getFilters x =
     case x of

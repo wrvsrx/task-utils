@@ -29,7 +29,7 @@ import System.Process (rawSystem)
 import Task.Renderer.Terminal (TaskColumn (..), listTask)
 import Taskwarrior.IO (getTasks)
 
-data TaskDate = AbsoluteDate Day | RelativeDate Int
+data TaskDate = AbsoluteDate Day | RelativeDate Int deriving (Show)
 
 listFromFilter :: [T.Text] -> IO ()
 listFromFilter filters = do

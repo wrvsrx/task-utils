@@ -1,5 +1,7 @@
+{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module Cli (
@@ -11,7 +13,11 @@ module Cli (
 ) where
 
 import Data.Text qualified as T
-import Data.Time (defaultTimeLocale, parseTimeM)
+import Data.Time (
+  LocalTime (..),
+  defaultTimeLocale,
+  parseTimeM,
+ )
 import Options.Applicative
 import Task (TaskDate (..))
 
@@ -60,6 +66,7 @@ data TotalOption
   | ViewTask (Maybe T.Text)
   | AddTask [T.Text]
   | DeleteTask T.Text
+  | VisualizeEvent VisualizeEventOption
   | -- shortcuts
     Date TaskDate
   | DateTag TaskDate
@@ -105,6 +112,71 @@ filterParser = argument str (metavar "FILTER")
 maybeFilterParser :: Parser (Maybe T.Text)
 maybeFilterParser = optional filterParser
 
+data TimeRange
+  = TimeRangeDay TaskDate
+  | TimeRangeRange LocalTime (Maybe LocalTime)
+  deriving (Show)
+
+data VisualizeEventOption = CliOption
+  { calendarDir :: Maybe FilePath
+  , timeRange :: Maybe TimeRange
+  , outputPng :: FilePath
+  , cacheJSONPath :: Maybe FilePath
+  , configPath :: Maybe FilePath
+  }
+  deriving (Show)
+
+calendarVisualizationParser :: Parser VisualizeEventOption
+calendarVisualizationParser = do
+  calendarDir <-
+    optional $
+      strOption
+        ( long "calendar-dir"
+            <> short 'c'
+            <> help "calendar directory"
+        )
+  timeRange <- optional timeRangeParser
+  outputPng :: FilePath <-
+    strOption
+      ( long "png"
+          <> short 'p'
+          <> help "output png file path"
+          <> metavar "PNG_FILE"
+      )
+  cacheJSONPath <-
+    optional $
+      strOption
+        ( long "cache"
+            <> metavar "CACHE_JSON_PATH"
+            <> help "cache json file path, default to $XDG_CACHE_HOME/task-utils/cache.json"
+        )
+  configPath <-
+    optional $
+      strOption
+        ( long "config"
+            <> help "configuration file, default to $XDG_CONFIG_HOME/task-utils/config.json"
+            <> metavar "CONFIG"
+        )
+  pure
+    CliOption
+      { calendarDir = calendarDir
+      , timeRange = timeRange
+      , outputPng = outputPng
+      , cacheJSONPath = cacheJSONPath
+      , configPath = configPath
+      }
+ where
+  dateTimeReader = maybeReader $ parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S" :: ReadM LocalTime
+  startTimeParser = option dateTimeReader (long "start-time" <> short 's' <> help "start time")
+  endTimeParser = option dateTimeReader (long "end-time" <> short 'e' <> help "end time")
+
+  timeRangeParser =
+    TimeRangeDay
+      <$> dateParser
+        <|> TimeRangeRange
+      <$> startTimeParser
+      <*> optional endTimeParser
+
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
@@ -121,4 +193,5 @@ totalParser =
         <> command "delete-task" (info (DeleteTask <$> filterParser) idm)
         <> command "date-tag" (info (DateTag <$> dateParser) idm)
         <> command "date" (info (Date <$> dateParser) idm)
+        <> command "visualize-event" (info (VisualizeEvent <$> calendarVisualizationParser) idm)
     )
