@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TaskUtils (
+module Task.Utils (
   listTask,
   TaskColumn (..),
   listFromFilter,
@@ -11,7 +11,7 @@ module TaskUtils (
   addTask,
   deleteTask,
   dateToDay,
-  Date (..),
+  TaskDate (..),
   viewTask,
 )
 where
@@ -26,10 +26,10 @@ import Data.Time (
   utcToLocalTime,
  )
 import System.Process (rawSystem)
-import TaskUtils.Renderer.Terminal (TaskColumn (..), listTask)
+import Task.Renderer.Terminal (TaskColumn (..), listTask)
 import Taskwarrior.IO (getTasks)
 
-data Date = AbsoluteDate Day | RelativeDate Int
+data TaskDate = AbsoluteDate Day | RelativeDate Int
 
 listFromFilter :: [T.Text] -> IO ()
 listFromFilter filters = do
@@ -56,7 +56,7 @@ addTask filters = do
   _ <- rawSystem "task" (["add"] <> map T.unpack filters)
   return ()
 
-dateToDay :: Date -> IO Day
+dateToDay :: TaskDate -> IO Day
 dateToDay date = do
   case date of
     AbsoluteDate day -> return day

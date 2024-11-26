@@ -6,6 +6,17 @@ module Task (
   getClosureImpure,
   RenderOption (..),
   taskDeserialize,
+  TaskDate (..),
+  parseFilter,
+  TaskColumn (..),
+  addTask,
+  dateToDay,
+  deleteTask,
+  finishTask,
+  listFromFilter,
+  listTask,
+  modTask,
+  viewTask,
 ) where
 
 import Control.Arrow ((>>>))
@@ -27,6 +38,19 @@ import Data.Time.LocalTime (TimeZone, localDay, utcToLocalTime)
 import Data.Tuple (swap)
 import Data.UUID (UUID)
 import Data.UUID qualified as UU
+import Task.FilterParser (parseFilter)
+import Task.Utils (
+  TaskColumn (..),
+  TaskDate (..),
+  addTask,
+  dateToDay,
+  deleteTask,
+  finishTask,
+  listFromFilter,
+  listTask,
+  modTask,
+  viewTask,
+ )
 import Taskwarrior.IO qualified as Ta
 import Taskwarrior.Status qualified as Ta
 import Taskwarrior.Task (Task)

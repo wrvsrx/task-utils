@@ -17,24 +17,22 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Time.LocalTime (getCurrentTimeZone)
-import FilterParser (parseFilter)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
 import Task (
   RenderOption (..),
-  getClosureImpure,
-  taskDeserialize,
-  tasksToDotImpure,
- )
-import TaskUtils (
   TaskColumn (..),
   addTask,
   dateToDay,
   deleteTask,
   finishTask,
+  getClosureImpure,
   listFromFilter,
   listTask,
   modTask,
+  parseFilter,
+  taskDeserialize,
+  tasksToDotImpure,
   viewTask,
  )
 import Taskwarrior.IO (getTasks)

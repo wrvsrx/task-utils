@@ -68,10 +68,6 @@ executable task-utils
   -- Modules included in this executable, other than Main.
   other-modules:
     Cli
-    FilterParser
-    Task
-    TaskUtils
-    TaskUtils.Renderer.Terminal
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -98,9 +94,41 @@ executable task-utils
     , unicode-show
     , utf8-string
     , uuid
+    , task-utils:task
 
   -- Directories containing source files.
   hs-source-dirs:     app
 
   -- Base language which the package is written in.
   default-language:   Haskell2010
+
+library task
+  import:             warnings
+  hs-source-dirs:     lib/task
+  default-extensions: ImportQualifiedPost
+  build-depends:
+    , aeson
+    , base
+    , bytestring
+    , containers
+    , doclayout
+    , fgl
+    , graphviz
+    , parsec
+    , pretty-simple
+    , process
+    , taskwarrior
+    , terminal-size
+    , text
+    , time
+    , unicode-show
+    , utf8-string
+    , uuid
+
+  default-language:   Haskell2010
+  exposed-modules:    Task
+  other-modules:
+    Task.Utils
+    Task.FilterParser
+    Task.Renderer.Terminal
+    

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module FilterParser (
+module Task.FilterParser (
   parseFilter,
 ) where
 

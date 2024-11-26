@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module TaskUtils.Renderer.Terminal (
+module Task.Renderer.Terminal (
   formatTasks,
   listTask,
   TaskColumn (..),

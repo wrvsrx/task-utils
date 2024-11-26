@@ -13,7 +13,7 @@ module Cli (
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, parseTimeM)
 import Options.Applicative
-import TaskUtils (Date (..))
+import Task (TaskDate (..))
 
 data VisOption = VisOption
   { highlights :: [T.Text]
@@ -28,17 +28,17 @@ data EventOption = EventOption
   , task :: Maybe T.Text
   }
 
-dateParser :: Parser Date
+dateParser :: Parser TaskDate
 dateParser = argument dayReader (metavar "DATE" <> value (RelativeDate 0))
  where
-  parseRelativeDate :: String -> Maybe Date
+  parseRelativeDate :: String -> Maybe TaskDate
   parseRelativeDate arg = do
     case arg of
       "today" -> Just $ RelativeDate 0
       "tomorrow" -> Just $ RelativeDate 1
       "yesterday" -> Just $ RelativeDate (-1)
       _ -> Nothing
-  parseAbsoluteDate :: String -> Maybe Date
+  parseAbsoluteDate :: String -> Maybe TaskDate
   parseAbsoluteDate arg = do
     case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
       Just x -> Just $ AbsoluteDate x
@@ -52,7 +52,7 @@ data TotalOption
   = Closure (Maybe T.Text)
   | Vis VisOption
   | Event EventOption
-  | ListEvent Date
+  | ListEvent TaskDate
   | Mod ModOption
   | ListTask (Maybe T.Text)
   | PendingTask (Maybe T.Text)
@@ -61,8 +61,8 @@ data TotalOption
   | AddTask [T.Text]
   | DeleteTask T.Text
   | -- shortcuts
-    Date Date
-  | DateTag Date
+    Date TaskDate
+  | DateTag TaskDate
 
 data ModOption = ModOption
   { filter :: T.Text
