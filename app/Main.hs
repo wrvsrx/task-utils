@@ -91,12 +91,6 @@ main = do
       viewTask (getFilters filter')
     AddTask taskInfos -> addTask taskInfos
     DeleteTask filter' -> deleteTask (getFilters (Just filter'))
-    DateTag date -> do
-      day <- dateToDay date
-      modTask ["entry:" <> T.pack (show day)] [T.pack (formatTime defaultTimeLocale "+d%Y%m%d" day)]
-    Date date -> do
-      day <- dateToDay date
-      listFromFilter ["entry:" <> T.pack (show day)]
     VisualizeEvent opt -> do
       opt' <- parseVisualizeEventCliOption opt
       visualizeEvent opt'

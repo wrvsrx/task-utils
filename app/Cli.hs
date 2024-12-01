@@ -84,9 +84,6 @@ data TotalOption
   | AddTask [T.Text]
   | DeleteTask T.Text
   | VisualizeEvent VisualizeEventOption
-  | -- shortcuts
-    Date TaskDate
-  | DateTag TaskDate
 
 data ModOption = ModOption
   { filter :: T.Text
@@ -245,7 +242,5 @@ totalParser =
         <> command "view-task" (info (ViewTask <$> maybeFilterParser) idm)
         <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
         <> command "delete-task" (info (DeleteTask <$> filterParser) idm)
-        <> command "date-tag" (info (DateTag <$> dateParser) idm)
-        <> command "date" (info (Date <$> dateParser) idm)
         <> command "visualize-event" (info (VisualizeEvent <$> calendarVisualizationParser) idm)
     )
