@@ -46,7 +46,7 @@ main :: IO ()
 main = do
   totalOpt <- customExecParser (prefs showHelpOnEmpty) (info totalParser idm)
   case totalOpt of
-    Vis opt -> do
+    VisualizeTask opt -> do
       let
         renderOpt = RenderOption{highlights = opt.highlights, showDeleted = opt.deleted}
       tasks <-
@@ -55,7 +55,7 @@ main = do
           else getTasks (getFilters opt.filter)
       tz <- getCurrentTimeZone
       tasks & tasksToDotImpure tz renderOpt >>= T.putStrLn
-    Closure filter' -> do
+    GetTaskClosure filter' -> do
       tasks <- getTasks (getFilters filter')
       taskClosure <- getClosureImpure tasks
       listTask [IdOrUUID, Description, Tags, Status, Urg] taskClosure

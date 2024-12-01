@@ -72,8 +72,8 @@ dateParser = argument dayReader (metavar "DATE" <> value (RelativeDate 0))
       Nothing -> Left "Failed to parse date. The supported formats are `today`, `tomorrow`, `yesterday`, YYYYMMDD or YYYY-MM-DD."
 
 data TotalOption
-  = Closure (Maybe T.Text)
-  | Vis VisOption
+  = GetTaskClosure (Maybe T.Text)
+  | VisualizeTask VisOption
   | Event EventOption
   | ListEvent TaskDate
   | Mod ModOption
@@ -231,8 +231,8 @@ parseVisualizeEventCliOption cliOption = do
 totalParser :: Parser TotalOption
 totalParser =
   hsubparser
-    ( command "visualize" (info (Vis <$> visParser) idm)
-        <> command "closure" (info (Closure <$> maybeFilterParser) idm)
+    ( command "visualize-task" (info (VisualizeTask <$> visParser) idm)
+        <> command "get-task-closure" (info (GetTaskClosure <$> maybeFilterParser) idm)
         <> command "modify-task" (info (Mod <$> modParser) idm)
         <> command "add-event" (info (Event <$> eventParser) idm)
         <> command "list-event" (info (ListEvent <$> dateParser) idm)
