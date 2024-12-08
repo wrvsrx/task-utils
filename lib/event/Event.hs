@@ -77,7 +77,7 @@ mainFunc timeZone options = do
     lift $
       tell ["UnknownEvents: " <> ushow unknownEvents]
   case checkEventRes of
-    Just (NotEndToEnd res) -> lift $ tell ["NotEndToEnd: \n" <> unlines (map (\x -> "\t" <> ushow x) (toList res))]
+    Just (NotEndToEnd res) -> lift $ tell $ ["NotEndToEnd:"] <> map (\x -> "\t" <> ushow x) (toList res)
     Nothing -> pure ()
   let
     totalTime = foldl (\a (_, b) -> a + b) 0.0 eventsWithTimeCost
@@ -92,7 +92,7 @@ visualizeEvent options = do
   timeZone <- getCurrentTimeZone
   (runResult, warnings) <- runWriterT $ runExceptT $ mainFunc timeZone options
   putStrLn "warnings: "
-  mapM_ (\x -> putStrLn $ "  " <> x) warnings
+  mapM_ (\x -> putStrLn $ "\t" <> x) warnings
   case runResult of
     Left err -> putStrLn $ "error: " <> err
     Right () -> return ()
