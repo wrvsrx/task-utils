@@ -11,6 +11,7 @@ module Event (
   ConfigFromFile (..),
 ) where
 
+import Control.Monad (when)
 import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Writer (WriterT, runWriterT, tell)
@@ -71,7 +72,9 @@ mainFunc timeZone options = do
     checkEventRes = checkEvent timeZone eventsInRange
     statistics = accountEvent (map (second (fromMaybe (EventType "unknown"))) classfiedEvent)
     eventsWithTimeCost = M.toList statistics
-  lift $ tell ["unknownEvents: " <> ushow unknownEvents]
+  when (not $ null unknownEvents) $
+    lift $
+      tell ["UnknownEvents: " <> ushow unknownEvents]
   case checkEventRes of
     Just (NotEndToEnd res) -> lift $ tell ["NotEndToEnd: \n" <> unlines (map (\x -> "\t" <> ushow x) res)]
     Nothing -> pure ()
