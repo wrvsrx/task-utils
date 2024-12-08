@@ -9,6 +9,7 @@ module Event.Summarize (
 ) where
 
 import Data.List (sort)
+import Data.List.NonEmpty (NonEmpty (..), nonEmpty)
 import Data.Map qualified as M
 import Data.Time (TimeZone, ZonedTime (..), diffUTCTime, utcToZonedTime)
 import Event.Classify (EventType (..))
@@ -24,7 +25,7 @@ data ZonedEvent = ZonedEvent
 eventToZonedEvent :: TimeZone -> Event -> ZonedEvent
 eventToZonedEvent tz (Event su s e) = ZonedEvent su (utcToZonedTime tz s) (utcToZonedTime tz e)
 
-data CheckError = NotEndToEnd [(ZonedEvent, ZonedEvent)] deriving (Show)
+newtype CheckError = NotEndToEnd (NonEmpty (ZonedEvent, ZonedEvent)) deriving (Show)
 
 checkEndToEnd :: TimeZone -> [Event] -> [(ZonedEvent, ZonedEvent)]
 checkEndToEnd _ [] = []
@@ -36,10 +37,7 @@ checkEndToEnd timeZone (x : y : xs) =
 
 checkEvent :: TimeZone -> [Event] -> Maybe CheckError
 checkEvent tz evs =
-  let
-    res = checkEndToEnd tz (sort evs)
-   in
-    if null res then Nothing else Just (NotEndToEnd res)
+  NotEndToEnd <$> nonEmpty (checkEndToEnd tz (sort evs))
 
 accountEvent :: [(Event, EventType)] -> M.Map EventType Double
 accountEvent =

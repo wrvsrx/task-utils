@@ -17,6 +17,7 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Writer (WriterT, runWriterT, tell)
 import Data.Aeson qualified as A
 import Data.Bifunctor (Bifunctor (second), bimap)
+import Data.List.NonEmpty (toList)
 import Data.Map qualified as M
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Text.Lazy qualified as T
@@ -76,7 +77,7 @@ mainFunc timeZone options = do
     lift $
       tell ["UnknownEvents: " <> ushow unknownEvents]
   case checkEventRes of
-    Just (NotEndToEnd res) -> lift $ tell ["NotEndToEnd: \n" <> unlines (map (\x -> "\t" <> ushow x) res)]
+    Just (NotEndToEnd res) -> lift $ tell ["NotEndToEnd: \n" <> unlines (map (\x -> "\t" <> ushow x) (toList res))]
     Nothing -> pure ()
   let
     totalTime = foldl (\a (_, b) -> a + b) 0.0 eventsWithTimeCost
