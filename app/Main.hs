@@ -72,7 +72,7 @@ main = do
       _ <-
         rawSystem "khal" $
           let
-            f = formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S"
+            f = formatTime defaultTimeLocale "%Y-%m-%dT%H:%M"
            in
             ["new", f start', f end, T.unpack summary] <> case task' of
               Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
