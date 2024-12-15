@@ -8,15 +8,12 @@
 module Cli (
   VisOption (..),
   TotalOption (..),
-  AddEventOption (..),
+  EventOption (..),
   ModOption (..),
   totalParser,
   parseVisualizeEventCliOption,
-  EnvInfo (..),
-  getEnvInfo,
 ) where
 
-import Control.Monad (msum)
 import Data.Aeson qualified as A
 import Data.Function ((&))
 import Data.Functor ((<&>))
@@ -26,8 +23,6 @@ import Data.Time (
   Day (..),
   LocalTime (..),
   TimeOfDay (..),
-  TimeZone (..),
-  UTCTime (..),
   defaultTimeLocale,
   getCurrentTime,
   getCurrentTimeZone,
@@ -40,28 +35,8 @@ import Event (
  )
 import Options.Applicative
 import System.Directory (XdgDirectory (..), getXdgDirectory)
+import Task (TaskDate (..), dateToDay)
 import Utils (TimeRange (..))
-
-data EnvInfo = EnvInfo
-  { currentTimeZone :: TimeZone
-  , currentTime :: UTCTime
-  , defaultConfigDirectory :: FilePath
-  }
-
-getEnvInfo :: IO EnvInfo
-getEnvInfo = do
-  currentTimeZone <- getCurrentTimeZone
-  currentTime <- getCurrentTime
-  defaultConfigDirectory <- getXdgDirectory XdgConfig "task-utils"
-  return
-    EnvInfo
-      { currentTimeZone = currentTimeZone
-      , currentTime = currentTime
-      , defaultConfigDirectory = defaultConfigDirectory
-      }
-
-getToday :: EnvInfo -> Day
-getToday envInfo = utcToLocalTime envInfo.currentTimeZone envInfo.currentTime & localDay
 
 data VisOption = VisOption
   { highlights :: [T.Text]
@@ -69,66 +44,38 @@ data VisOption = VisOption
   , filter :: Maybe T.Text
   }
 
-data AddEventOption = AddEventOption
+data EventOption = EventOption
   { summary :: T.Text
-  , start :: LocalTime
-  , end :: LocalTime
+  , start :: T.Text
+  , end :: T.Text
   , task :: Maybe T.Text
   }
 
-dateStrings :: [String]
-dateStrings = ["%Y-%m-%d", "%Y%m%d"]
-
-readDateMaybe :: EnvInfo -> String -> Maybe Day
-readDateMaybe envInfo arg =
-  relativeDate <|> absoluteDate
+dateParser :: Parser TaskDate
+dateParser = argument dayReader (metavar "DATE" <> value (RelativeDate 0))
  where
-  currentDay = (utcToLocalTime envInfo.currentTimeZone envInfo.currentTime).localDay
-  relativeDate :: Maybe Day
-  relativeDate = do
+  parseRelativeDate :: String -> Maybe TaskDate
+  parseRelativeDate arg = do
     case arg of
-      "today" -> Just currentDay
-      "tomorrow" -> Just (succ currentDay)
-      "yesterday" -> Just (pred currentDay)
+      "today" -> Just $ RelativeDate 0
+      "tomorrow" -> Just $ RelativeDate 1
+      "yesterday" -> Just $ RelativeDate (-1)
       _ -> Nothing
-  absoluteDate :: Maybe Day
-  absoluteDate = msum $ map (\pattern -> parseTimeM False defaultTimeLocale pattern arg) dateStrings
-
-timeStrings :: [String]
-timeStrings = ["%H:%M:%S", "%H%M%S", "%H:%M", "%H%M"]
-
-readTimeMaybe :: String -> Maybe TimeOfDay
-readTimeMaybe arg = msum $ map (\pattern -> parseTimeM False defaultTimeLocale pattern arg) timeStrings
-
-readDateTimeMaybe :: EnvInfo -> String -> Maybe LocalTime
-readDateTimeMaybe envInfo arg = do
-  msum [dateMaybe', timeMaybe, dateTimeMaybe]
- where
-  today = getToday envInfo
-  -- only date
-  dateMaybe' = (\x -> LocalTime x (TimeOfDay 0 0 0)) <$> readDateMaybe envInfo arg
-  -- only time
-  timeMaybe = LocalTime today <$> readTimeMaybe arg
-  -- time and date
-  dateTimeMaybe = msum $ map (\pattern -> parseTimeM False defaultTimeLocale pattern arg) ((\x y -> x <> "T" <> y) <$> dateStrings <*> timeStrings)
-
-dateReader :: EnvInfo -> ReadM Day
-dateReader envInfo = eitherReader $ \arg ->
-  case readDateMaybe envInfo arg of
-    Just x -> Right x
-    Nothing -> Left "Failed to parse date."
-
-dateTimeReader :: EnvInfo -> ReadM LocalTime
-dateTimeReader envInfo = eitherReader $ \arg ->
-  case readDateTimeMaybe envInfo arg of
-    Just x -> Right x
-    Nothing -> Left "Failed to parse date time."
+  parseAbsoluteDate :: String -> Maybe TaskDate
+  parseAbsoluteDate arg = do
+    case parseTimeM True defaultTimeLocale "%Y%m%d" arg <|> parseTimeM True defaultTimeLocale "%Y-%m-%d" arg of
+      Just x -> Just $ AbsoluteDate x
+      Nothing -> Nothing
+  dayReader = eitherReader $ \arg ->
+    case parseRelativeDate arg <|> parseAbsoluteDate arg of
+      Just x -> Right x
+      Nothing -> Left "Failed to parse date. The supported formats are `today`, `tomorrow`, `yesterday`, YYYYMMDD or YYYY-MM-DD."
 
 data TotalOption
   = GetTaskClosure (Maybe T.Text)
   | VisualizeTask VisOption
-  | AddEvent AddEventOption
-  | ListEvent Day
+  | Event EventOption
+  | ListEvent TaskDate
   | Mod ModOption
   | ListTask (Maybe T.Text)
   | PendingTask (Maybe T.Text)
@@ -165,12 +112,12 @@ modParser =
     <$> argument str (metavar "FILTER")
     <*> many (argument str (metavar "MODIFIER"))
 
-addEventParser :: EnvInfo -> Parser AddEventOption
-addEventParser envInfo =
-  AddEventOption
+eventParser :: Parser EventOption
+eventParser =
+  EventOption
     <$> argument str (metavar "SUMMARY")
-    <*> argument (dateTimeReader envInfo) (metavar "START")
-    <*> argument (dateTimeReader envInfo) (metavar "END")
+    <*> argument str (metavar "START")
+    <*> argument str (metavar "END")
     <*> optional (argument str (metavar "TASK"))
 
 filterParser :: Parser T.Text
@@ -188,8 +135,8 @@ data VisualizeEventOption = CliOption
   }
   deriving (Show)
 
-calendarVisualizationParser :: EnvInfo -> Parser VisualizeEventOption
-calendarVisualizationParser envInfo = do
+calendarVisualizationParser :: Parser VisualizeEventOption
+calendarVisualizationParser = do
   calendarDir <-
     optional $
       strOption
@@ -228,11 +175,14 @@ calendarVisualizationParser envInfo = do
       , configPath = configPath
       }
  where
-  startTimeParser = option (dateTimeReader envInfo) (long "start-time" <> short 's' <> help "start time")
-  endTimeParser = option (dateTimeReader envInfo) (long "end-time" <> short 'e' <> help "end time")
+  dateTimeReader = maybeReader $ parseTimeM False defaultTimeLocale "%Y-%m-%dT%H:%M:%S" :: ReadM LocalTime
+  startTimeParser = option dateTimeReader (long "start-time" <> short 's' <> help "start time")
+  endTimeParser = option dateTimeReader (long "end-time" <> short 'e' <> help "end time")
 
   timeRangeParser =
-    TimeRange
+    TimeRangeDay
+      <$> dateParser
+        <|> TimeRangeRange
       <$> startTimeParser
       <*> optional endTimeParser
 
@@ -255,9 +205,15 @@ parseVisualizeEventCliOption cliOption = do
         Nothing -> error "calendarDir is not specified either in command line or in config file"
   timeRange <- do
     case cliOption.timeRange of
-      Just (TimeRange startTime maybeEndTime) -> case maybeEndTime of
+      Just (TimeRangeDay day) -> do
+        day' <- dateToDay day
+        return
+          ( LocalTime{localDay = day', localTimeOfDay = TimeOfDay 0 0 0}
+          , LocalTime{localDay = succ day', localTimeOfDay = TimeOfDay 0 0 0}
+          )
+      Just (TimeRangeRange startTime maybeEndTime) -> case maybeEndTime of
         Just endTime -> return (startTime, endTime)
-        Nothing -> return (startTime, LocalTime{localDay = succ (localDay startTime), localTimeOfDay = startTime.localTimeOfDay})
+        Nothing -> return (startTime, LocalTime{localDay = succ (localDay startTime), localTimeOfDay = TimeOfDay 0 0 0})
       Nothing ->
         return
           ( LocalTime{localDay = currentDay, localTimeOfDay = TimeOfDay 0 0 0}
@@ -272,22 +228,19 @@ parseVisualizeEventCliOption cliOption = do
       , classifyConfig = config.classifyConfig
       }
 
-totalParser :: EnvInfo -> Parser TotalOption
-totalParser envInfo =
-  let
-    today = getToday envInfo
-   in
-    hsubparser
-      ( command "visualize-task" (info (VisualizeTask <$> visParser) idm)
-          <> command "get-task-closure" (info (GetTaskClosure <$> maybeFilterParser) idm)
-          <> command "modify-task" (info (Mod <$> modParser) idm)
-          <> command "add-event" (info (AddEvent <$> addEventParser envInfo) idm)
-          <> command "list-event" (info (ListEvent <$> argument (dateReader envInfo) (metavar "DATE" <> value today)) idm)
-          <> command "list-task" (info (ListTask <$> maybeFilterParser) idm)
-          <> command "pending-task" (info (PendingTask <$> maybeFilterParser) idm)
-          <> command "finish-task" (info (FinishTask <$> maybeFilterParser) idm)
-          <> command "view-task" (info (ViewTask <$> maybeFilterParser) idm)
-          <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
-          <> command "delete-task" (info (DeleteTask <$> filterParser) idm)
-          <> command "visualize-event" (info (VisualizeEvent <$> calendarVisualizationParser envInfo) idm)
-      )
+totalParser :: Parser TotalOption
+totalParser =
+  hsubparser
+    ( command "visualize-task" (info (VisualizeTask <$> visParser) idm)
+        <> command "get-task-closure" (info (GetTaskClosure <$> maybeFilterParser) idm)
+        <> command "modify-task" (info (Mod <$> modParser) idm)
+        <> command "add-event" (info (Event <$> eventParser) idm)
+        <> command "list-event" (info (ListEvent <$> dateParser) idm)
+        <> command "list-task" (info (ListTask <$> maybeFilterParser) idm)
+        <> command "pending-task" (info (PendingTask <$> maybeFilterParser) idm)
+        <> command "finish-task" (info (FinishTask <$> maybeFilterParser) idm)
+        <> command "view-task" (info (ViewTask <$> maybeFilterParser) idm)
+        <> command "add-task" (info (AddTask <$> many (argument str (metavar "TASK_INFO"))) idm)
+        <> command "delete-task" (info (DeleteTask <$> filterParser) idm)
+        <> command "visualize-event" (info (VisualizeEvent <$> calendarVisualizationParser) idm)
+    )

@@ -6,9 +6,11 @@ module Task (
   getClosureImpure,
   RenderOption (..),
   taskDeserialize,
+  TaskDate (..),
   parseFilter,
   TaskColumn (..),
   addTask,
+  dateToDay,
   deleteTask,
   finishTask,
   listFromFilter,
@@ -39,6 +41,7 @@ import Data.UUID qualified as UU
 import Task.FilterParser (parseFilter)
 import Task.Utils (
   TaskColumn (..),
+  TaskDate (..),
   addTask,
   deleteTask,
   finishTask,
@@ -51,6 +54,7 @@ import Taskwarrior.IO qualified as Ta
 import Taskwarrior.Status qualified as Ta
 import Taskwarrior.Task (Task)
 import Taskwarrior.Task qualified as Ta
+import Utils (dateToDay)
 
 taskDeserialize :: BL.ByteString -> [Task]
 taskDeserialize = fromJust . (A.decode :: BL.ByteString -> Maybe [Task])
