@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -10,7 +9,6 @@ module Task.Utils (
   finishTask,
   addTask,
   deleteTask,
-  TaskDate (..),
   viewTask,
 )
 where
@@ -19,7 +17,6 @@ import Data.Text qualified as T
 import System.Process (rawSystem)
 import Task.Renderer.Terminal (TaskColumn (..), listTask)
 import Taskwarrior.IO (getTasks)
-import Utils (TaskDate (..))
 
 listFromFilter :: [T.Text] -> IO ()
 listFromFilter filters = do

@@ -27,7 +27,6 @@ import Task (
   RenderOption (..),
   TaskColumn (..),
   addTask,
-  dateToDay,
   deleteTask,
   finishTask,
   getClosureImpure,
@@ -44,7 +43,8 @@ import Taskwarrior.Task (Task (..))
 
 main :: IO ()
 main = do
-  totalOpt <- customExecParser (prefs showHelpOnEmpty) (info totalParser idm)
+  envInfo <- getEnvInfo
+  totalOpt <- customExecParser (prefs showHelpOnEmpty) (info (totalParser envInfo) idm)
   case totalOpt of
     VisualizeTask opt -> do
       let
@@ -59,7 +59,7 @@ main = do
       tasks <- getTasks (getFilters filter')
       taskClosure <- getClosureImpure tasks
       listTask [IdOrUUID, Description, Tags, Status, Urg] taskClosure
-    Event (EventOption summary start' end task) -> do
+    AddEvent (AddEventOption summary start' end task) -> do
       task' <- do
         case task of
           Just t -> do
@@ -71,9 +71,12 @@ main = do
           Nothing -> return Nothing
       _ <-
         rawSystem "khal" $
-          ["new", T.unpack start', T.unpack end, T.unpack summary] <> case task' of
-            Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
-            Nothing -> []
+          let
+            f = formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S"
+           in
+            ["new", f start', f end, T.unpack summary] <> case task' of
+              Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
+              Nothing -> []
       return ()
     Mod (ModOption filter' modifiers) -> modTask (getFilters (Just filter')) modifiers
     ListTask filter' -> listFromFilter (getFilters filter')
@@ -82,8 +85,7 @@ main = do
         filters = keepPendingFilters (getFilters filter')
       tasks <- getTasks filters
       listTask [IdOrUUID, Description, Tags, Urg] tasks
-    ListEvent date -> do
-      day <- dateToDay date
+    ListEvent day -> do
       _ <- rawSystem "khal" ["list", formatTime defaultTimeLocale "%Y-%m-%d" day]
       return ()
     FinishTask filter' -> finishTask (keepPendingFilters (getFilters filter'))
