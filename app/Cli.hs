@@ -48,7 +48,7 @@ data AddEventOption = EventOption
   { summary :: T.Text
   , start :: T.Text
   , end :: T.Text
-  , task :: Maybe T.Text
+  , filter' :: Maybe T.Text
   }
 
 dateParser :: Parser TaskDate

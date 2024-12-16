@@ -59,20 +59,19 @@ main = do
       tasks <- getTasks (getFilters filter')
       taskClosure <- getClosureImpure tasks
       listTask [IdOrUUID, Description, Tags, Status, Urg] taskClosure
-    AddEvent (EventOption summary start' end task) -> do
-      task' <- do
-        case task of
-          Just t -> do
-            ts <- getTasks [t]
-            case ts of
-              [t'] -> return (Just t')
-              [] -> fail "Task not found"
-              _ -> fail "Multiple tasks found"
-          Nothing -> return Nothing
+    AddEvent (EventOption summary start' end filter') -> do
+      maybeEventDescription <- case filter' of
+        Nothing -> return Nothing
+        Just filter'' -> do
+          tasks <- getTasks (getFilters (Just filter''))
+          case tasks of
+            [task] -> return $ Just $ BLU.toString $ A.encode (A.object ["task" .= task.uuid])
+            [] -> error "No task found"
+            _ -> error "Multiple tasks found"
       _ <-
         rawSystem "khal" $
-          ["new", T.unpack start', T.unpack end, T.unpack summary] <> case task' of
-            Just t -> ["::", BLU.toString $ A.encode (A.object ["task" .= t.uuid])]
+          ["new", T.unpack start', T.unpack end, T.unpack summary] <> case maybeEventDescription of
+            Just description' -> ["::", description']
             Nothing -> []
       return ()
     Mod (ModOption filter' modifiers) -> modTask (getFilters (Just filter')) modifiers
