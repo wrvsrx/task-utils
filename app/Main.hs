@@ -59,7 +59,7 @@ main = do
       tasks <- getTasks (getFilters filter')
       taskClosure <- getClosureImpure tasks
       listTask [IdOrUUID, Description, Tags, Status, Urg] taskClosure
-    Event (EventOption summary start' end task) -> do
+    AddEvent (EventOption summary start' end task) -> do
       task' <- do
         case task of
           Just t -> do

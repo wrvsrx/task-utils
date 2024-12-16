@@ -8,7 +8,7 @@
 module Cli (
   VisOption (..),
   TotalOption (..),
-  EventOption (..),
+  AddEventOption (..),
   ModOption (..),
   totalParser,
   parseVisualizeEventCliOption,
@@ -44,7 +44,7 @@ data VisOption = VisOption
   , filter :: Maybe T.Text
   }
 
-data EventOption = EventOption
+data AddEventOption = EventOption
   { summary :: T.Text
   , start :: T.Text
   , end :: T.Text
@@ -74,7 +74,7 @@ dateParser = argument dayReader (metavar "DATE" <> value (RelativeDate 0))
 data TotalOption
   = GetTaskClosure (Maybe T.Text)
   | VisualizeTask VisOption
-  | Event EventOption
+  | AddEvent AddEventOption
   | ListEvent TaskDate
   | Mod ModOption
   | ListTask (Maybe T.Text)
@@ -112,7 +112,7 @@ modParser =
     <$> argument str (metavar "FILTER")
     <*> many (argument str (metavar "MODIFIER"))
 
-eventParser :: Parser EventOption
+eventParser :: Parser AddEventOption
 eventParser =
   EventOption
     <$> argument str (metavar "SUMMARY")
@@ -234,7 +234,7 @@ totalParser =
     ( command "visualize-task" (info (VisualizeTask <$> visParser) idm)
         <> command "get-task-closure" (info (GetTaskClosure <$> maybeFilterParser) idm)
         <> command "modify-task" (info (Mod <$> modParser) idm)
-        <> command "add-event" (info (Event <$> eventParser) idm)
+        <> command "add-event" (info (AddEvent <$> eventParser) idm)
         <> command "list-event" (info (ListEvent <$> dateParser) idm)
         <> command "list-task" (info (ListTask <$> maybeFilterParser) idm)
         <> command "pending-task" (info (PendingTask <$> maybeFilterParser) idm)
