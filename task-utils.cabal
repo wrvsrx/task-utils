@@ -76,7 +76,7 @@ executable task-utils
   -- Other library packages from which modules are imported.
   build-depends:
     , directory
-    , task-utils:event
+    , task-utils:icalendar-extra
     , aeson
     , base
     , bytestring
@@ -135,9 +135,9 @@ library task
     Task.Renderer.Terminal
     Task.Utils
 
-library event
+library icalendar-extra
   import:             warnings
-  hs-source-dirs:     lib/event
+  hs-source-dirs:     lib/icalendar-extra
   default-extensions: ImportQualifiedPost
   build-depends:
     , aeson
@@ -170,13 +170,13 @@ library event
     , task-utils:utils
 
   default-language:   Haskell2010
-  exposed-modules:    Event
+  exposed-modules:    Text.ICalendar.Extra.Event
   other-modules:
-    Event.Classify
-    Event.Draw
-    Event.Event
-    Event.ParseVDirSyncer
-    Event.Summarize
+    Text.ICalendar.Extra.Classify
+    Text.ICalendar.Extra.Draw
+    Text.ICalendar.Extra.Types
+    Text.ICalendar.Extra.ParseVDirSyncer
+    Text.ICalendar.Extra.Summarize
 
 library utils
   import:             warnings

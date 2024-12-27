@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event.Summarize (
+module Text.ICalendar.Extra.Summarize (
   checkEvent,
   accountEvent,
   formatCheckError,
@@ -13,8 +13,8 @@ import Data.List (sort)
 import Data.List.NonEmpty (NonEmpty (..), nonEmpty, toList)
 import Data.Map qualified as M
 import Data.Time (TimeZone, ZonedTime (..), diffUTCTime, utcToZonedTime)
-import Event.Classify (EventType (..))
-import Event.Event (Event (..))
+import Text.ICalendar.Extra.Classify (EventType (..))
+import Text.ICalendar.Extra.Types (Event (..))
 import Text.Printf (printf)
 
 data ZonedEvent = ZonedEvent

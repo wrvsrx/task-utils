@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event.Classify (
+module Text.ICalendar.Extra.Classify (
   EventType (..),
   classifyEvent,
   ClassifyConfig (..),
@@ -16,7 +16,7 @@ import Data.Aeson qualified as A
 import Data.List.Split (splitOn)
 import Data.Map qualified as M
 import Data.Text qualified as T
-import Event.Event (Event (..))
+import Text.ICalendar.Extra.Types (Event (..))
 import GHC.Generics (Generic)
 
 newtype EventType = EventType {typeName :: String} deriving (Generic, Eq, Ord, Show)

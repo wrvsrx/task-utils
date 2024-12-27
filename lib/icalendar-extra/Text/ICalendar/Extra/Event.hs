@@ -6,7 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event (
+module Text.ICalendar.Extra.Event (
   visualizeEvent,
   CalendarSummaryOption (..),
   ConfigFromFile (..),
@@ -27,21 +27,21 @@ import Data.Time (
   getCurrentTimeZone,
   localTimeToUTC,
  )
-import Event.Classify (ClassifyConfig (..), EventType (..), classifyEvent)
-import Event.Draw (toPng)
-import Event.ParseVDirSyncer (
+import GHC.Generics (Generic)
+import System.Directory (createDirectoryIfMissing)
+import System.FilePath (takeDirectory)
+import Text.ICalendar.Extra.Classify (ClassifyConfig (..), EventType (..), classifyEvent)
+import Text.ICalendar.Extra.Draw (toPng)
+import Text.ICalendar.Extra.ParseVDirSyncer (
   CalendarContent (..),
   filterAccordingToTime,
   parseCalendarsUsingCache,
  )
-import Event.Summarize (
+import Text.ICalendar.Extra.Summarize (
   accountEvent,
   checkEvent,
   formatCheckError,
  )
-import GHC.Generics (Generic)
-import System.Directory (createDirectoryIfMissing)
-import System.FilePath (takeDirectory)
 import Text.Pretty.Simple (pShow)
 import Text.Show.Unicode (uprint, ushow)
 

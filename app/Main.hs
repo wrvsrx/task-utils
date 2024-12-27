@@ -20,7 +20,6 @@ import Data.Time (
   formatTime,
  )
 import Data.Time.LocalTime (getCurrentTimeZone)
-import Event (visualizeEvent)
 import Options.Applicative (customExecParser, idm, info, prefs, showHelpOnEmpty)
 import System.Process (rawSystem)
 import Task (
@@ -41,6 +40,7 @@ import Task (
  )
 import Taskwarrior.IO (getTasks)
 import Taskwarrior.Task (Task (..))
+import Text.ICalendar.Extra.Event (visualizeEvent)
 
 main :: IO ()
 main = do

@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event.Event (
+module Text.ICalendar.Extra.Types (
   Event (..),
   Todo (..),
 ) where

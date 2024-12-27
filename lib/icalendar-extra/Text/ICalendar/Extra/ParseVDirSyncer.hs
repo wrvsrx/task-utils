@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event.ParseVDirSyncer (
+module Text.ICalendar.Extra.ParseVDirSyncer (
   parseVDirSyncerICSFile,
   filterAccordingToTime,
   parseCalendarsUsingCache,
@@ -33,14 +33,14 @@ import Data.Time (
   secondsToNominalDiffTime,
   zonedTimeToUTC,
  )
-import Event.Event (
-  Event (..),
-  Todo (..),
- )
 import GHC.Generics (Generic)
 import System.Directory (doesFileExist, getModificationTime, listDirectory)
 import System.FilePath ((</>))
 import Text.ICalendar
+import Text.ICalendar.Extra.Types (
+  Event (..),
+  Todo (..),
+ )
 
 dateTimeToUTC :: M.Map T.Text VTimeZone -> DateTime -> Either String UTCTime
 dateTimeToUTC _ (FloatingDateTime _) = Left "don't support floating datetime"

@@ -3,11 +3,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event.Draw (toPng) where
+module Text.ICalendar.Extra.Draw (toPng) where
 
-import Event.Classify (EventType (..))
 import Graphics.Rendering.Chart.Backend.Cairo
 import Graphics.Rendering.Chart.Easy
+import Text.ICalendar.Extra.Classify (EventType (..))
 import Text.Printf (printf)
 
 pitem :: (EventType, Double) -> PieItem
