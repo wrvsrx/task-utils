@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -29,8 +30,9 @@ import Data.Time (
 import Event.Classify (ClassifyConfig (..), EventType (..), classifyEvent)
 import Event.Draw (toPng)
 import Event.ParseVDirSyncer (
+  CalendarContent (..),
   filterAccordingToTime,
-  parseEventsUsingCache,
+  parseCalendarsUsingCache,
  )
 import Event.Summarize (
   accountEvent,
@@ -66,8 +68,15 @@ mainFunc timeZone options = do
   let
     cacheDir = takeDirectory options.cacheJSONPath
   l2 $ createDirectoryIfMissing True cacheDir
-  events <- parseEventsUsingCache options.cacheJSONPath options.calendarDir
+  calendarContents <- parseCalendarsUsingCache options.cacheJSONPath options.calendarDir
   let
+    events =
+      mapMaybe
+        ( \case
+            EventContent a -> Just a
+            TodoContent _ -> Nothing
+        )
+        calendarContents
     eventsInRange = mapMaybe (filterAccordingToTime (bimap f f options.timeRange)) events
      where
       f = localTimeToUTC timeZone

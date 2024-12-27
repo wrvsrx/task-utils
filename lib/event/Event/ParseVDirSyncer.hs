@@ -7,7 +7,8 @@
 module Event.ParseVDirSyncer (
   parseVDirSyncerICSFile,
   filterAccordingToTime,
-  parseEventsUsingCache,
+  parseCalendarsUsingCache,
+  CalendarContent (..),
 ) where
 
 import Control.Exception (assert)
@@ -32,7 +33,10 @@ import Data.Time (
   secondsToNominalDiffTime,
   zonedTimeToUTC,
  )
-import Event.Event (Event (..))
+import Event.Event (
+  Event (..),
+  Todo (..),
+ )
 import GHC.Generics (Generic)
 import System.Directory (doesFileExist, getModificationTime, listDirectory)
 import System.FilePath ((</>))
@@ -102,7 +106,7 @@ vEventToEvent timeZoneMap ve = do
             }
         )
 
-parseVDirSyncerICSFile :: BL.ByteString -> Either String Event
+parseVDirSyncerICSFile :: BL.ByteString -> Either String CalendarContent
 parseVDirSyncerICSFile cnt = do
   vCalAAndWarnings <- parseICalendar def "<file path>" cnt
   let
@@ -114,10 +118,14 @@ parseVDirSyncerICSFile cnt = do
   let
     timeZoneMap = vCal.vcTimeZones
     vEvents = vCal.vcEvents & M.toList
-  vEvent <- case vEvents of
-    [((_, Nothing), vEvent)] -> Right vEvent
+    vTodos = vCal.vcTodos & M.toList
+  case (vEvents, vTodos) of
+    ([], [(_, _)]) -> return $ TodoContent (Todo ())
+    ([(_, ve)], []) -> do
+      event <- vEventToEvent timeZoneMap ve
+      return $ EventContent event
+    ([], []) -> Left "no events and todos"
     _ -> Left "wrong vCal content"
-  vEventToEvent timeZoneMap vEvent
 
 -- 左闭右开
 filterAccordingToTime :: (UTCTime, UTCTime) -> Event -> Maybe Event
@@ -132,15 +140,20 @@ filterAccordingToTime (rangeStart, rangeEnd) (Event summary eventStart eventEnd)
           , endTime = min eventEnd rangeEnd
           }
 
-data EventCache = EventCache
+data ContentCache = ContentCache
   { cacheTime :: UTCTime
-  , event :: Event
+  , content :: CalendarContent
   , filename :: FilePath
   }
   deriving (Generic)
 
-instance A.FromJSON EventCache
-instance A.ToJSON EventCache
+instance A.FromJSON ContentCache
+instance A.ToJSON ContentCache
+
+data CalendarContent = EventContent Event | TodoContent Todo deriving (Show, Generic)
+
+instance A.FromJSON CalendarContent
+instance A.ToJSON CalendarContent
 
 -- 分成三部分，A 记为 cache 集合，B 记为文件集合
 -- 在 A 且 B 中，
@@ -154,50 +167,50 @@ instance A.ToJSON EventCache
 -- 可能失败的地方：
 --   解析 json 过程
 --   解析 ics 过程
-parseEventsUsingCache :: FilePath -> FilePath -> ExceptT String (WriterT [String] IO) [Event]
-parseEventsUsingCache cacheJSON calendarDir = do
+parseCalendarsUsingCache :: FilePath -> FilePath -> ExceptT String (WriterT [String] IO) [CalendarContent]
+parseCalendarsUsingCache cacheJSON calendarDir = do
   exist <- l2 $ doesFileExist cacheJSON
   unless exist $ l2 $ writeFile cacheJSON "[]"
   cacheContent <- l2 $ BL.readFile cacheJSON
   let
-    maybeEventCacheA = cacheContent & A.decode :: Maybe [EventCache]
+    maybeEventCacheA = cacheContent & A.decode :: Maybe [ContentCache]
   eventCacheA <- case maybeEventCacheA of
     Just x -> return x
     Nothing -> throwE "fail to parse json cache"
   icsFileB <- l2 $ listDirectory calendarDir
   icsFileWithModificationTimeB <- l2 $ mapM (\x -> getModificationTime (calendarDir </> x) >>= (\y -> return (x, y))) icsFileB
   let
-    eventInFileMap = M.fromList icsFileWithModificationTimeB
-    eventInCacheMap = M.fromList (map (\x -> (x.filename, (x.cacheTime, x.event))) eventCacheA)
-    eventInFileWithoutCache = M.toList $ M.difference eventInFileMap eventInCacheMap
-    eventInBothFileAndCache = M.toList $ M.intersectionWith (\fileTime (cacheTime, event) -> (fileTime, cacheTime, event)) eventInFileMap eventInCacheMap
-  eventNotInCacheC <-
+    contentInFileMap = M.fromList icsFileWithModificationTimeB
+    contentInCacheMap = M.fromList (map (\x -> (x.filename, (x.cacheTime, x.content))) eventCacheA)
+    contentInFileWithoutCache = M.toList $ M.difference contentInFileMap contentInCacheMap
+    contentInBothFileAndCache = M.toList $ M.intersectionWith (\fileTime (cacheTime, event) -> (fileTime, cacheTime, event)) contentInFileMap contentInCacheMap
+  contentNotInCacheC <-
     mapM
       ( \(filename, fileTime) -> do
           cnt <- l2 $ BL.readFile (calendarDir </> filename)
           let
-            eventEither = parseVDirSyncerICSFile cnt
-          case eventEither of
-            Right event ->
+            contentEither = parseVDirSyncerICSFile cnt
+          case contentEither of
+            Right content ->
               return
-                ( EventCache
+                ( ContentCache
                     { cacheTime = fileTime
-                    , event = event
+                    , content = content
                     , filename = filename
                     }
                 )
             Left err -> throwE err
       )
-      eventInFileWithoutCache
-  eventInBothFileAndCacheD <-
+      contentInFileWithoutCache
+  contentInBothFileAndCacheD <-
     mapM
-      ( \(filename, (fileTime, cacheTime, event)) ->
+      ( \(filename, (fileTime, cacheTime, content)) ->
           if fileTime == cacheTime
             then
               return
-                ( EventCache
+                ( ContentCache
                     { cacheTime = cacheTime
-                    , event = event
+                    , content = content
                     , filename = filename
                     }
                 )
@@ -205,22 +218,22 @@ parseEventsUsingCache cacheJSON calendarDir = do
               lift $ when (fileTime < cacheTime) $ tell ["fileTime is earlier than cacheTime: " <> show filename]
               cnt <- l2 $ BL.readFile (calendarDir </> filename)
               let
-                eventEither = parseVDirSyncerICSFile cnt
-              case eventEither of
-                Right eventNew ->
+                contentEither = parseVDirSyncerICSFile cnt
+              case contentEither of
+                Right contentNew ->
                   return
-                    ( EventCache
+                    ( ContentCache
                         { cacheTime = fileTime
-                        , event = eventNew
+                        , content = contentNew
                         , filename = filename
                         }
                     )
                 Left err -> throwE err
       )
-      eventInBothFileAndCache
+      contentInBothFileAndCache
   let
-    finalEventsCache = eventNotInCacheC <> eventInBothFileAndCacheD
-    finalEvents = map (\x -> x.event) finalEventsCache
+    finalEventsCache = contentNotInCacheC <> contentInBothFileAndCacheD
+    finalEvents = map (\x -> x.content) finalEventsCache
   l2 $ BL.writeFile cacheJSON (A.encode finalEventsCache)
   return finalEvents
  where

@@ -3,7 +3,10 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Event.Event (Event (..)) where
+module Event.Event (
+  Event (..),
+  Todo (..),
+) where
 
 import Control.DeepSeq (NFData)
 import Data.Aeson qualified as A
@@ -20,8 +23,13 @@ data Event = Event
   }
   deriving (Show, Generic, Eq)
 
+newtype Todo = Todo {unwrap :: ()} deriving (Show, Generic, Eq)
+
 instance A.FromJSON Event
 instance A.ToJSON Event
+
+instance A.FromJSON Todo
+instance A.ToJSON Todo
 
 instance NFData Event
 instance Ord Event where
