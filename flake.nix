@@ -2,9 +2,11 @@
   description = "flake template";
 
   inputs = {
-    flake-lock.url = "github:wrvsrx/flake-lock";
-    nixpkgs.follows = "flake-lock/nixpkgs";
-    flake-parts.follows = "flake-lock/flake-parts";
+    nixpkgs.url = "github:wrvsrx/nixpkgs/patched-nixos-unstable";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -20,17 +22,7 @@
               inherit system;
               config.allowBroken = true;
             };
-            packages.default = pkgs.haskellPackages.callPackage ./default.nix {
-              doclayout = pkgs.haskell.lib.overrideSrc pkgs.haskellPackages.doclayout {
-                src = pkgs.fetchFromGitHub {
-                  owner = "jgm";
-                  repo = "doclayout";
-                  rev = "0.5";
-                  hash = "sha256-gTJhoM0WEF+5sbA3bEH+eYAjixNQf1oi2WbcBJpwLZg=";
-                };
-                version = "0.5";
-              };
-            };
+            packages.default = pkgs.haskellPackages.callPackage ./default.nix { };
             devShells.default = pkgs.haskellPackages.shellFor {
               packages = _: [
                 packages.default
