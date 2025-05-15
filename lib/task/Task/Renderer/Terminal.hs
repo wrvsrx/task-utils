@@ -42,7 +42,7 @@ padFloat intPartLen floatPartLen f =
   let
     intPart :: Int = floor f
     floatPart = f - fromIntegral intPart
-    floatStr = tail $ show floatPart
+    floatStr = drop 1 $ show floatPart
    in
     L.rblock intPartLen (L.literal $ T.pack $ show intPart)
       <> L.lblock
