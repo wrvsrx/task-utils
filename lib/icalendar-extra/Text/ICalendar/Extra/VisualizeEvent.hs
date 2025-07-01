@@ -6,18 +6,19 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Text.ICalendar.Extra.Event (
+module Text.ICalendar.Extra.VisualizeEvent (
   visualizeEvent,
   CalendarSummaryOption (..),
   ConfigFromFile (..),
 ) where
 
-import Control.Monad (unless)
 import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Control.Monad.Trans.Writer (WriterT, runWriterT, tell)
 import Data.Aeson qualified as A
 import Data.Bifunctor (Bifunctor (second), bimap)
+import Data.ByteString qualified as BL
+import Data.List.NonEmpty (nonEmpty)
 import Data.Map qualified as M
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Text.Lazy qualified as T
@@ -27,6 +28,7 @@ import Data.Time (
   getCurrentTimeZone,
   localTimeToUTC,
  )
+import Data.Yaml qualified as Y
 import GHC.Generics (Generic)
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (takeDirectory)
@@ -40,10 +42,11 @@ import Text.ICalendar.Extra.ParseVDirSyncer (
 import Text.ICalendar.Extra.Summarize (
   accountEvent,
   checkEvent,
-  formatCheckError,
+ )
+import Text.ICalendar.Extra.Types (
+  VisualizeEventWarning (..),
  )
 import Text.Pretty.Simple (pShow)
-import Text.Show.Unicode (uprint, ushow)
 
 data ConfigFromFile = ConfigFromFile
   { calendarDir :: Maybe FilePath
@@ -63,8 +66,8 @@ data CalendarSummaryOption = CalendarSummaryOption
   , classifyConfig :: ClassifyConfig
   }
 
-mainFunc :: TimeZone -> CalendarSummaryOption -> ExceptT String (WriterT [String] IO) ()
-mainFunc timeZone options = do
+parseAndSummaryEvents :: TimeZone -> CalendarSummaryOption -> ExceptT String (WriterT [VisualizeEventWarning] IO) [(EventType, Double)]
+parseAndSummaryEvents timeZone options = do
   let
     cacheDir = takeDirectory options.cacheJSONPath
   l2 $ createDirectoryIfMissing True cacheDir
@@ -85,26 +88,19 @@ mainFunc timeZone options = do
     checkEventRes = checkEvent timeZone eventsInRange
     statistics = accountEvent (map (second (fromMaybe (EventType "unknown"))) classfiedEvent)
     eventsWithTimeCost = M.toList statistics
-  unless (null unknownEvents) $
-    lift $
-      tell ["UnknownEvents: " <> ushow unknownEvents]
+  case nonEmpty unknownEvents of
+    Nothing -> return ()
+    Just x -> lift $ tell [UnknownEvents x]
   case checkEventRes of
-    Just err -> lift $ tell $ formatCheckError err
+    Just err -> lift $ tell [err]
     Nothing -> pure ()
-  let
-    totalTime = foldl (\a (_, b) -> a + b) 0.0 eventsWithTimeCost
-  lift $ tell ["totalTime: " <> show totalTime]
   l2 $ toPng options.outputPng eventsWithTimeCost
-  l2 $ mapM_ (\(EventType a, t) -> uprint (a, t / 3600.0)) eventsWithTimeCost
+  return eventsWithTimeCost
  where
   l2 = lift . lift
 
 visualizeEvent :: CalendarSummaryOption -> IO ()
 visualizeEvent options = do
   timeZone <- getCurrentTimeZone
-  (runResult, warnings) <- runWriterT $ runExceptT $ mainFunc timeZone options
-  putStrLn "warnings: "
-  mapM_ (\x -> putStrLn $ "\t" <> x) warnings
-  case runResult of
-    Left err -> putStrLn $ "error: " <> err
-    Right () -> return ()
+  (runResult, warnings) <- runWriterT $ runExceptT $ parseAndSummaryEvents timeZone options
+  BL.putStr (Y.encode (runResult, warnings))

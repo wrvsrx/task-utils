@@ -40,6 +40,7 @@ import Text.ICalendar
 import Text.ICalendar.Extra.Types (
   Event (..),
   Todo (..),
+  VisualizeEventWarning (..),
  )
 
 dateTimeToUTC :: M.Map T.Text VTimeZone -> DateTime -> Either String UTCTime
@@ -167,7 +168,7 @@ instance A.ToJSON CalendarContent
 -- 可能失败的地方：
 --   解析 json 过程
 --   解析 ics 过程
-parseCalendarsUsingCache :: FilePath -> FilePath -> ExceptT String (WriterT [String] IO) [CalendarContent]
+parseCalendarsUsingCache :: FilePath -> FilePath -> ExceptT String (WriterT [VisualizeEventWarning] IO) [CalendarContent]
 parseCalendarsUsingCache cacheJSON calendarDir = do
   exist <- l2 $ doesFileExist cacheJSON
   unless exist $ l2 $ writeFile cacheJSON "[]"
@@ -215,7 +216,7 @@ parseCalendarsUsingCache cacheJSON calendarDir = do
                     }
                 )
             else do
-              lift $ when (fileTime < cacheTime) $ tell ["fileTime is earlier than cacheTime: " <> show filename]
+              lift $ when (fileTime < cacheTime) $ tell [FileTimeEarlierThanCacheTime filename]
               cnt <- l2 $ BL.readFile (calendarDir </> filename)
               let
                 contentEither = parseVDirSyncerICSFile cnt

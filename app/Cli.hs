@@ -29,7 +29,7 @@ import Data.Time (
   parseTimeM,
   utcToLocalTime,
  )
-import Text.ICalendar.Extra.Event (
+import Text.ICalendar.Extra.VisualizeEvent (
   CalendarSummaryOption (..),
   ConfigFromFile (..),
  )

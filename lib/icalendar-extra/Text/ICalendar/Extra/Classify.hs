@@ -11,22 +11,11 @@ module Text.ICalendar.Extra.Classify (
   ClassifyError (..),
 ) where
 
-import Data.Aeson ((.:))
 import Data.Aeson qualified as A
 import Data.List.Split (splitOn)
 import Data.Map qualified as M
-import Data.Text qualified as T
-import Text.ICalendar.Extra.Types (Event (..))
 import GHC.Generics (Generic)
-
-newtype EventType = EventType {typeName :: String} deriving (Generic, Eq, Ord, Show)
-
-instance A.FromJSON EventType where
-  parseJSON a = case a of
-    A.Object o -> EventType <$> (o .: "typeName")
-    A.String s -> return (EventType (T.unpack s))
-    _ -> fail "fail to parse"
-instance A.ToJSON EventType
+import Text.ICalendar.Extra.Types (Event (..), EventType (..))
 
 data ClassifyConfig = ClassifyConfig
   { eventTypes :: [EventType]

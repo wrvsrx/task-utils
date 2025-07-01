@@ -2,7 +2,7 @@
 , containers, data-default, deepseq, directory, doclayout, fgl
 , filepath, graphviz, iCalendar, lib, optparse-applicative, parsec
 , pretty-simple, process, split, taskwarrior, terminal-size, text
-, time, transformers, unicode-show, utf8-string, uuid
+, time, transformers, unicode-show, utf8-string, uuid, yaml
 }:
 mkDerivation {
   pname = "task-utils";
@@ -15,9 +15,10 @@ mkDerivation {
     deepseq directory doclayout fgl filepath graphviz iCalendar
     optparse-applicative parsec pretty-simple process split taskwarrior
     terminal-size text time transformers unicode-show utf8-string uuid
+    yaml
   ];
   executableHaskellDepends = [
-    aeson base bytestring containers doclayout fgl graphviz
+    aeson base bytestring containers directory doclayout fgl graphviz
     optparse-applicative parsec pretty-simple process taskwarrior
     terminal-size text time unicode-show utf8-string uuid
   ];

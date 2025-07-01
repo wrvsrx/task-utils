@@ -40,7 +40,7 @@ import Task (
  )
 import Taskwarrior.IO (getTasks)
 import Taskwarrior.Task (Task (..))
-import Text.ICalendar.Extra.Event (visualizeEvent)
+import Text.ICalendar.Extra.VisualizeEvent (visualizeEvent)
 
 main :: IO ()
 main = do

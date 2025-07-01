@@ -75,12 +75,11 @@ executable task-utils
 
   -- Other library packages from which modules are imported.
   build-depends:
-    , directory
-    , task-utils:icalendar-extra
     , aeson
     , base
     , bytestring
     , containers
+    , directory
     , doclayout
     , fgl
     , graphviz
@@ -88,7 +87,9 @@ executable task-utils
     , parsec
     , pretty-simple
     , process
+    , task-utils:icalendar-extra
     , task-utils:task
+    , task-utils:utils
     , taskwarrior
     , terminal-size
     , text
@@ -96,7 +97,6 @@ executable task-utils
     , unicode-show
     , utf8-string
     , uuid
-    , task-utils:utils
 
   -- Directories containing source files.
   hs-source-dirs:     app
@@ -119,6 +119,7 @@ library task
     , parsec
     , pretty-simple
     , process
+    , task-utils:utils
     , taskwarrior
     , terminal-size
     , text
@@ -126,7 +127,6 @@ library task
     , unicode-show
     , utf8-string
     , uuid
-    , task-utils:utils
 
   default-language:   Haskell2010
   exposed-modules:    Task
@@ -159,6 +159,7 @@ library icalendar-extra
     , pretty-simple
     , process
     , split
+    , task-utils:utils
     , taskwarrior
     , terminal-size
     , text
@@ -167,16 +168,16 @@ library icalendar-extra
     , unicode-show
     , utf8-string
     , uuid
-    , task-utils:utils
+    , yaml
 
   default-language:   Haskell2010
-  exposed-modules:    Text.ICalendar.Extra.Event
+  exposed-modules:    Text.ICalendar.Extra.VisualizeEvent
   other-modules:
     Text.ICalendar.Extra.Classify
     Text.ICalendar.Extra.Draw
-    Text.ICalendar.Extra.Types
     Text.ICalendar.Extra.ParseVDirSyncer
     Text.ICalendar.Extra.Summarize
+    Text.ICalendar.Extra.Types
 
 library utils
   import:             warnings
