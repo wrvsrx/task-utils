@@ -1,5 +1,5 @@
 {
-  description = "flake template";
+  description = "Task utils";
 
   inputs = {
     nixpkgs.url = "github:wrvsrx/nixpkgs/patched-nixos-unstable";
@@ -34,7 +34,7 @@
                 haskell-language-server
               ];
             };
-            formatter = pkgs.nixfmt-rfc-style;
+            formatter = pkgs.nixfmt;
           };
       }
     );
