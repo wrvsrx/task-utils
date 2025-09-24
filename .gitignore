@@ -1,5 +1,6 @@
 # direnv cache
 .direnv
+.envrc
 
 # from Haskell.gitignore
 dist
