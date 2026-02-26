@@ -185,24 +185,22 @@ parseCalendarsUsingCache cacheJSON calendarDir = do
     contentInCacheMap = M.fromList (map (\x -> (x.filename, (x.cacheTime, x.content))) eventCacheA)
     contentInFileWithoutCache = M.toList $ M.difference contentInFileMap contentInCacheMap
     contentInBothFileAndCache = M.toList $ M.intersectionWith (\fileTime (cacheTime, event) -> (fileTime, cacheTime, event)) contentInFileMap contentInCacheMap
-  contentNotInCacheC <-
-    mapM
-      ( \(filename, fileTime) -> do
-          cnt <- l2 $ BL.readFile (calendarDir </> filename)
-          let
-            contentEither = parseVDirSyncerICSFile cnt
-          case contentEither of
-            Right content ->
-              return
-                ( ContentCache
-                    { cacheTime = fileTime
-                    , content = content
-                    , filename = filename
-                    }
-                )
-            Left err -> throwE err
-      )
-      contentInFileWithoutCache
+    parseContent :: (FilePath, UTCTime) -> ExceptT String (WriterT [VisualizeEventWarning] IO) ContentCache
+    parseContent = \(filename, fileTime) -> do
+      cnt <- l2 $ BL.readFile (calendarDir </> filename)
+      let
+        contentEither = parseVDirSyncerICSFile cnt
+      case contentEither of
+        Right content ->
+          return
+            ( ContentCache
+                { cacheTime = fileTime
+                , content = content
+                , filename = filename
+                }
+            )
+        Left err -> throwE ("parse " <> (calendarDir </> filename) <> " fail with: " <> err)
+  contentNotInCacheC <- mapM parseContent contentInFileWithoutCache
   contentInBothFileAndCacheD <-
     mapM
       ( \(filename, (fileTime, cacheTime, content)) ->
@@ -217,19 +215,7 @@ parseCalendarsUsingCache cacheJSON calendarDir = do
                 )
             else do
               lift $ when (fileTime < cacheTime) $ tell [FileTimeEarlierThanCacheTime filename]
-              cnt <- l2 $ BL.readFile (calendarDir </> filename)
-              let
-                contentEither = parseVDirSyncerICSFile cnt
-              case contentEither of
-                Right contentNew ->
-                  return
-                    ( ContentCache
-                        { cacheTime = fileTime
-                        , content = contentNew
-                        , filename = filename
-                        }
-                    )
-                Left err -> throwE err
+              parseContent (filename, fileTime)
       )
       contentInBothFileAndCache
   let
